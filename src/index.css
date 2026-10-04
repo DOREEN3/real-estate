@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+
+.app-sidebar {
+  transform: translateX(-100%);
+}
+
+.app-sidebar.is-open {
+  transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+  .app-sidebar {
+    transform: translateX(0);
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-receipt,
+  .print-receipt *,
+  .print-statement,
+  .print-statement * {
+    visibility: visible !important;
+  }
+
+  .print-receipt,
+  .print-statement {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 2rem !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}

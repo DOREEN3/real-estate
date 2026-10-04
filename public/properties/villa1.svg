@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Luxury villa</title>
+  <desc id="desc">A spacious villa with pool and tropical garden.</desc>
+  <defs>
+    <linearGradient id="sky3" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d1f0ff"/>
+      <stop offset="100%" stop-color="#f9fcff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky3)"/>
+  <rect y="560" width="1200" height="240" fill="#7bb577"/>
+  <rect x="170" y="300" width="860" height="220" fill="#e7edf2" rx="18"/>
+  <rect x="240" y="250" width="180" height="270" fill="#cbd7e7" rx="12"/>
+  <rect x="450" y="210" width="250" height="310" fill="#dfe8f2" rx="12"/>
+  <rect x="730" y="260" width="190" height="260" fill="#c9d5e5" rx="12"/>
+  <rect x="260" y="355" width="140" height="130" fill="#f6fafe" rx="8"/>
+  <rect x="495" y="350" width="160" height="120" fill="#f5f8fb" rx="8"/>
+  <rect x="770" y="350" width="130" height="120" fill="#f5f8fb" rx="8"/>
+  <path d="M210 600 H990 Q1035 600 1060 620 V680 H150 V620 Q175 600 210 600 Z" fill="#90c2c5"/>
+  <rect x="250" y="618" width="700" height="32" fill="#8ec7d3" opacity="0.8"/>
+  <rect x="350" y="635" width="500" height="22" fill="#91d6ef" opacity="0.8"/>
+  <circle cx="935" cy="118" r="65" fill="#ffe59d" opacity="0.9"/>
+  <path d="M170 610 C320 560, 488 560, 630 610 C760 660, 890 660, 1040 610 L1040 690 H170 Z" fill="#5da4d2" opacity="0.55"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Apartment flat exterior</title>
+  <desc id="desc">A cozy apartment block with warm sunlight.</desc>
+  <defs>
+    <linearGradient id="sunset" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7d7a8"/>
+      <stop offset="100%" stop-color="#f0f5fb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sunset)"/>
+  <rect y="575" width="1200" height="225" fill="#b7d7a8"/>
+  <rect x="250" y="250" width="700" height="300" fill="#dfe7ef" rx="18"/>
+  <rect x="330" y="300" width="190" height="180" fill="#c7d4e0" rx="8"/>
+  <rect x="560" y="300" width="190" height="180" fill="#c7d4e0" rx="8"/>
+  <rect x="790" y="300" width="110" height="180" fill="#e5ecf7" rx="8"/>
+  <rect x="360" y="350" width="130" height="100" fill="#f4f7fb" rx="6"/>
+  <rect x="590" y="350" width="130" height="100" fill="#f4f7fb" rx="6"/>
+  <rect x="820" y="352" width="50" height="95" fill="#f9d8a5" rx="6"/>
+  <path d="M220 585 L980 585 L980 640 Q890 680 820 640 H375 Q290 680 220 640 Z" fill="#a7c7bf"/>
+  <circle cx="980" cy="120" r="70" fill="#ffe29b" opacity="0.9"/>
+  <path d="M110 610 Q210 550 335 610" stroke="#7aa673" stroke-width="14" fill="none" opacity="0.8"/>
+  <path d="M865 610 Q955 545 1085 610" stroke="#7aa673" stroke-width="14" fill="none" opacity="0.8"/>
+</svg>

@@ -1,0 +1,170 @@
+[
+    {
+        "id":1,
+        "title":"Modern 4 Bedroom House",
+        "type":"House",
+        "listingType":"For Sale",
+        "price":1850000,
+        "currency":"KSH",
+        "location":{
+            "country":"Kenya",
+            "city":"Nairobi",
+            "area":"Karen",
+            "longitude":37.9062,
+            "latitude":-1.2864
+        },
+        "description":"A beautiful modern 4 bedroom house located in the serene area of Karen, Nairobi. This property features spacious living areas, a modern kitchen, and a large backyard.",
+        "bedrooms":4,
+        "bathrooms":3,
+        "size":"450 sqm",
+        "images":[
+            "/properties/house1.svg",
+            "/properties/apartment1.svg"
+        ],
+        "features":[
+            "Parking",
+            "Garden",
+            "Security",
+            "Swimming Pool",
+            "Parking",
+            "WIFI"
+        ],
+        "status":"Available",
+        "agentId":101,
+        "ownerId":201
+    },
+    {
+        "id":2,
+        "title":"Luxury Penthouse with City View",
+        "type":"Apartment",
+        "listingType":"For Sale",
+        "price":2400000,
+        "currency":"KSH",
+        "location":{
+            "country":"Kenya",
+            "city":"Nairobi",
+            "area":"Westlands",
+            "longitude":36.8065,
+            "latitude":-1.2634
+        },
+        "description":"Elegant penthouse apartment in Westlands with panoramic city views, a private terrace, and premium finishes throughout.",
+        "bedrooms":3,
+        "bathrooms":3,
+        "size":"320 sqm",
+        "images":[
+            "/properties/apartment1.svg",
+            "/properties/house1.svg"
+        ],
+        "features":[
+            "Parking",
+            "Gym",
+            "Security",
+            "Balcony",
+            "Lift",
+            "WIFI"
+        ],
+        "status":"Available",
+        "agentId":102,
+        "ownerId":202
+    },
+    {
+        "id":3,
+        "title":"Cozy 2 Bedroom Flat",
+        "type":"Apartment",
+        "listingType":"For Rent",
+        "price":65000,
+        "currency":"KSH",
+        "location":{
+            "country":"Kenya",
+            "city":"Nairobi",
+            "area":"Kilimani",
+            "longitude":36.7888,
+            "latitude":-1.2872
+        },
+        "description":"A well-maintained 2 bedroom flat in Kilimani, ideal for professionals and small families looking for comfort and convenience.",
+        "bedrooms":2,
+        "bathrooms":2,
+        "size":"180 sqm",
+        "images":[
+            "/properties/flat1.svg",
+            "/properties/apartment1.svg"
+        ],
+        "features":[
+            "Parking",
+            "Security",
+            "Water",
+            "Generator",
+            "WIFI"
+        ],
+        "status":"Available",
+        "agentId":103,
+        "ownerId":203
+    },
+    {
+        "id":4,
+        "title":"Spacious Family Villa",
+        "type":"Villa",
+        "listingType":"BNB",
+        "price":4200000,
+        "currency":"KSH",
+        "location":{
+            "country":"Kenya",
+            "city":"Mombasa",
+            "area":"Nyali",
+            "longitude":39.6672,
+            "latitude":-4.0435
+        },
+        "description":"A luxurious family villa in Nyali with ocean breeze, a large garden, and multiple living spaces designed for comfort and entertaining.",
+        "bedrooms":5,
+        "bathrooms":4,
+        "size":"620 sqm",
+        "images":[
+            "/properties/villa1.svg",
+            "/properties/house1.svg"
+        ],
+        "features":[
+            "Parking",
+            "Garden",
+            "Security",
+            "Pool",
+            "Outdoor Patio",
+            "WIFI"
+        ],
+        "status":"Available",
+        "agentId":104,
+        "ownerId":204
+    },
+    {
+        "id":5,
+        "title":"Modern Studio in CBD",
+        "type":"Studio",
+        "listingType":"For Rent",
+        "price":35000,
+        "currency":"KSH",
+        "location":{
+            "country":"Kenya",
+            "city":"Nairobi",
+            "area":"CBD",
+            "longitude":36.8172,
+            "latitude":-1.2861
+        },
+        "description":"A stylish studio apartment in the heart of Nairobi CBD, suitable for single professionals seeking central convenience and modern finishes.",
+        "bedrooms":1,
+        "bathrooms":1,
+        "size":"75 sqm",
+        "images":[
+            "/properties/studio1.svg",
+            "/properties/apartment1.svg"
+        ],
+        "features":[
+            "Parking",
+            "Security",
+            "Lift",
+            "WIFI",
+            "Air Conditioning"
+        ],
+        "status":"Available",
+        "agentId":105,
+        "ownerId":205
+    }
+]
