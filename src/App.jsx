@@ -28,11 +28,19 @@ import { getMatches } from "./lib/demo";
 
 const rolePages = {
   admin: ["Dashboard", "Properties", "Enquiries", "Agents", "Owners", "Rentals", "Sales", "Payments", "Notifications"],
-  agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales"],
-  owner: ["Dashboard", "Properties", "Enquiries"],
+  agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales", "Notifications"],
+  owner: ["Dashboard", "Properties", "Enquiries", "Rentals", "Notifications"],
 };
 
-function createNotification(title, message, audience, type) {
+function propertyRecipients(...properties) {
+  const recipients = properties.flatMap((property) => [
+    ...(property?.agentId ? [{ role: "agent", id: property.agentId }] : []),
+    ...(property?.ownerId ? [{ role: "owner", id: property.ownerId }] : []),
+  ]);
+  return [...new Map(recipients.map((recipient) => [`${recipient.role}:${recipient.id}`, recipient])).values()];
+}
+
+function createNotification(title, message, audience, type, recipients = []) {
   return {
     id: Date.now() + Math.random(),
     title,
@@ -41,6 +49,7 @@ function createNotification(title, message, audience, type) {
     type,
     channels: ["Email", "SMS", "WhatsApp"],
     createdAt: new Date().toISOString(),
+    recipients,
   };
 }
 
@@ -48,6 +57,7 @@ function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [propertyEditorOpen, setPropertyEditorOpen] = useState(false);
+  const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [listingAttribution, setListingAttribution] = useState({});
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
@@ -88,7 +98,13 @@ function App() {
   const scopedRentPayments = !user || isAdmin ? rentPayments : rentPayments.filter((payment) => scopedRentalIds.has(payment.rentalId));
   const scopedAgents = !user || isAdmin ? agents : user.role === "agent" ? agents.filter((agent) => agent.id === user.id) : [];
   const scopedOwners = !user || isAdmin ? owners : user.role === "owner" ? owners.filter((owner) => owner.id === user.id) : [];
-  const scopedNotifications = isAdmin ? notifications : [];
+  const scopedNotifications = !user
+    ? []
+    : isAdmin
+    ? notifications
+    : notifications.filter((notification) => notification.recipients?.some((recipient) =>
+      recipient.role === user.role && recipient.id === user.id
+    ));
   const allowedPages = user ? rolePages[user.role] : [];
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
@@ -105,6 +121,26 @@ function App() {
       return changed ? next : previous;
     });
   }, [rentals, setProperties]);
+
+  useEffect(() => {
+    const ownerProperty = initialProperties.find((property) => property.id === 7);
+    const ownerRental = initialRentals.find((rental) => rental.id === 1002);
+    const ownerRentPayment = initialRentPayments.find((payment) => payment.id === 1102);
+    if (ownerProperty) {
+      setProperties((previous) => previous.some((property) => property.id === ownerProperty.id) ? previous : [...previous, ownerProperty]);
+    }
+    if (ownerRental) {
+      setRentals((previous) => previous.some((rental) => rental.id === ownerRental.id) ? previous : [...previous, ownerRental]);
+    }
+    if (ownerRentPayment) {
+      setRentPayments((previous) => previous.some((payment) => payment.id === ownerRentPayment.id) ? previous : [ownerRentPayment, ...previous]);
+    }
+    setNotifications((previous) => {
+      const existingIds = new Set(previous.map((notification) => notification.id));
+      const missingNotifications = initialNotifications.filter((notification) => !existingIds.has(notification.id));
+      return missingNotifications.length ? [...missingNotifications, ...previous] : previous;
+    });
+  }, [setProperties, setRentals, setRentPayments, setNotifications]);
 
   function notifyUser(message) {
     window.clearTimeout(toastTimer.current);
@@ -149,6 +185,10 @@ function App() {
       `${newProperty.title} in ${newProperty.location.city} was added. Agent notifications are ready for review.`,
       `${agents.length} registered agents · admin team`,
       "Property",
+      [
+        ...agents.filter((agent) => agent.verified).map((agent) => ({ role: "agent", id: agent.id })),
+        ...propertyRecipients(newProperty),
+      ],
     ));
     const matchedEnquiries = enquiries.filter((enquiry) => getMatches(newProperty, [enquiry]).length > 0);
     if (matchedEnquiries.length) {
@@ -158,6 +198,7 @@ function App() {
         `${newProperty.title} matches ${recipientNames}. Notifications include the matched leads, listing agent and owner where assigned, plus the admin team.`,
         `${matchedEnquiries.length} lead${matchedEnquiries.length === 1 ? "" : "s"} · listing contacts · admin team`,
         "Match",
+        propertyRecipients(newProperty),
       ));
     }
     notifyUser(`Property saved. Simulated email, SMS and WhatsApp alerts queued for ${agents.length} registered agents.`);
@@ -165,9 +206,65 @@ function App() {
     setActivePage("Properties");
     setPropertyEditorOpen(false);
     setListingAttribution({});
+    setEditingPropertyId(null);
+  }
+
+  function beginEditProperty(property) {
+    setEditingPropertyId(property.id);
+    setListingAttribution({
+      ...property,
+      country: property.location.country || "",
+      city: property.location.city || "",
+      area: property.location.area || "",
+      latitude: property.location.latitude ?? "",
+      longitude: property.location.longitude ?? "",
+      agentId: property.agentId ? String(property.agentId) : "",
+      ownerId: property.ownerId ? String(property.ownerId) : "",
+    });
+    setPropertyEditorOpen(true);
+  }
+
+  function handleUpdateProperty(form) {
+    const property = properties.find((item) => item.id === editingPropertyId);
+    const canEdit = property && (isAdmin ||
+      (user.role === "agent" && property.agentId === user.id) ||
+      (user.role === "owner" && property.ownerId === user.id));
+    if (!canEdit) {
+      notifyUser("Property could not be updated because it is not linked to your account.");
+      return;
+    }
+    const hasActiveRental = rentals.some((rental) => rental.propertyId === property.id && rental.status === "Active");
+    const updatedProperty = {
+      ...property,
+      ...form,
+      id: property.id,
+      listingType: hasActiveRental ? "For Rent" : form.listingType,
+      status: hasActiveRental ? "Rented" : form.status,
+      price: Number(form.price),
+      bedrooms: Number(form.bedrooms) || 0,
+      bathrooms: Number(form.bathrooms) || 0,
+      location: {
+        country: form.country.trim(),
+        city: form.city.trim(),
+        area: form.area.trim(),
+        latitude: form.latitude === "" ? null : Number(form.latitude),
+        longitude: form.longitude === "" ? null : Number(form.longitude),
+      },
+      agentId: property.agentId,
+      ownerId: property.ownerId,
+    };
+    setProperties((previous) => previous.map((item) => item.id === property.id ? updatedProperty : item));
+    setPropertyEditorOpen(false);
+    setEditingPropertyId(null);
+    setListingAttribution({});
+    notifyUser("Property updated.");
   }
 
   function handleAddEnquiry(form, property = null) {
+    if (user.role === "owner") {
+      notifyUser("Owners can view related enquiries but cannot add enquiries.");
+      return;
+    }
     const newEnquiry = {
       ...form,
       source: form.source || "Website",
@@ -180,20 +277,22 @@ function App() {
       status: "New",
       createdAt: new Date().toISOString(),
     };
+    const matches = properties.filter((listedProperty) => getMatches(listedProperty, [newEnquiry]).length > 0);
     setEnquiries((previous) => [newEnquiry, ...previous]);
     addActivity(createNotification(
       "New buyer enquiry received",
       `${newEnquiry.name} is looking for ${newEnquiry.propertyType || "a property"}${newEnquiry.city ? ` in ${newEnquiry.city}` : ""}. Follow-up is assigned to the admin team.`,
       "Admin team · lead",
       "Enquiry",
+      propertyRecipients(property, ...matches),
     ));
-    const matches = properties.filter((listedProperty) => getMatches(listedProperty, [newEnquiry]).length > 0);
     if (matches.length) {
       addActivity(createNotification(
         "Buyer enquiry matched to listings",
         `${newEnquiry.name} matches ${matches.map((match) => match.title).join(", ")}. Alert the lead, listing contact and admin team.`,
         `${newEnquiry.name} · listing contacts · admin team`,
         "Match",
+        propertyRecipients(...matches),
       ));
     }
     notifyUser(matches.length
@@ -203,11 +302,20 @@ function App() {
   }
 
   function handleUpdateEnquiryStatus(id, status) {
+    if (user.role === "owner" || !scopedEnquiries.some((enquiry) => enquiry.id === id)) {
+      notifyUser("Enquiry status could not be updated because it is read-only or outside your account.");
+      return;
+    }
     setEnquiries((previous) => previous.map((enquiry) => enquiry.id === id ? { ...enquiry, status } : enquiry));
     notifyUser(`Enquiry status updated to ${status}.`);
   }
 
   function handleNotifyMatch(enquiry, matchedProperties) {
+    if (user.role === "owner" || !scopedEnquiries.some((item) => item.id === enquiry.id) ||
+      matchedProperties.some((property) => !scopedPropertyIds.has(property.id))) {
+      notifyUser("Match alert could not be prepared because the enquiry or property is outside your account.");
+      return;
+    }
     const agentIds = new Set(matchedProperties.map((property) => property.agentId).filter(Boolean));
     const ownerIds = new Set(matchedProperties.map((property) => property.ownerId).filter(Boolean));
     const agentNames = agents.filter((agent) => agentIds.has(agent.id)).map((agent) => agent.name);
@@ -218,12 +326,17 @@ function App() {
       `${matchedProperties.map((property) => property.title).join(", ")} match ${enquiry.name}'s requirements. This demo records alerts for the lead, listing contact${ownerNames.length ? ", owner" : ""} and admin team.`,
       audience,
       "Match",
+      propertyRecipients(...matchedProperties),
     ));
     handleUpdateEnquiryStatus(enquiry.id, "Matched");
     notifyUser(`Availability alert recorded for ${audience}. No external messages were sent.`);
   }
 
   function handleAddPerson(kind, person) {
+    if (!isAdmin) {
+      notifyUser("Only admins can register agents or owners.");
+      return;
+    }
     const newPerson = { ...person, id: Date.now(), verified: false, listings: 0, properties: 0 };
     const updateList = kind === "Agents" ? setAgents : setOwners;
     updateList((previous) => [newPerson, ...previous]);
@@ -237,6 +350,10 @@ function App() {
   }
 
   function handleUpdateVerification(kind, id, verified) {
+    if (!isAdmin) {
+      notifyUser("Only admins can update agent or owner verification.");
+      return;
+    }
     const updateList = kind === "Agents" ? setAgents : setOwners;
     updateList((previous) => previous.map((person) => person.id === id ? { ...person, verified } : person));
     notifyUser(`${kind.slice(0, -1)} ${verified ? "verified" : "verification revoked"}.`);
@@ -251,7 +368,8 @@ function App() {
 
   function handleAddSale(form) {
     const property = properties.find((item) => item.id === form.propertyId);
-    if (!property || property.listingType !== "For Sale" || property.status !== "Available") {
+    const canRegister = isAdmin || (user.role === "agent" && property?.agentId === user.id);
+    if (!canRegister || !property || property.listingType !== "For Sale" || property.status !== "Available") {
       notifyUser("Sale could not be saved because the selected property is unavailable.");
       return;
     }
@@ -296,11 +414,16 @@ function App() {
       `${sale.propertyTitle} was sold to ${sale.buyerName}. Deposit receipt ${depositReceipt.reference} issued.`,
       `${sale.buyerName} · admin team`,
       "Payment",
+      propertyRecipients(property),
     ));
     notifyUser(`Sale saved. Deposit receipt ${depositReceipt.reference} issued.`);
   }
 
   function handleRecordPayment(form) {
+    if (!isAdmin) {
+      notifyUser("Only admins can record sale payments.");
+      return;
+    }
     const sale = sales.find((item) => item.id === form.saleId);
     if (!sale) {
       notifyUser("Payment could not be recorded because the sale account is unavailable.");
@@ -335,13 +458,15 @@ function App() {
       `${formatCurrencyForActivity(payment.amount, sale.currency)} received from ${sale.buyerName}. Receipt ${payment.reference} issued.`,
       `${sale.buyerName} · admin team`,
       "Payment",
+      propertyRecipients(properties.find((property) => property.id === sale.propertyId)),
     ));
     notifyUser(`Payment saved. Receipt ${payment.reference} issued.`);
   }
 
   function handleAddRental(form) {
     const property = properties.find((item) => item.id === form.propertyId);
-    if (!property || property.listingType !== "For Rent" || property.status !== "Available" || rentals.some((rental) => rental.propertyId === form.propertyId && rental.status === "Active")) {
+    const canRegister = isAdmin || (user.role === "agent" && property?.agentId === user.id);
+    if (!canRegister || !property || property.listingType !== "For Rent" || property.status !== "Available" || rentals.some((rental) => rental.propertyId === form.propertyId && rental.status === "Active")) {
       notifyUser("Rental could not be saved because the selected property is unavailable.");
       return;
     }
@@ -364,11 +489,16 @@ function App() {
       `${rental.propertyTitle} was rented to ${rental.tenantName} at ${formatCurrencyForActivity(rental.monthlyRent, rental.currency)} per month.`,
       `${rental.tenantName} · admin team`,
       "Rental",
+      propertyRecipients(property),
     ));
     notifyUser(`Rental saved for ${rental.tenantName}. Monthly rent tracking is ready.`);
   }
 
   function handleRecordRentPayment(form) {
+    if (!isAdmin) {
+      notifyUser("Only admins can record rent payments.");
+      return;
+    }
     const rental = rentals.find((item) => item.id === form.rentalId && item.status === "Active");
     const amount = Number(form.amount);
     if (!rental || !Number.isFinite(amount) || amount <= 0 || !/^\d{4}-\d{2}$/.test(form.period)) {
@@ -395,16 +525,22 @@ function App() {
       `${formatCurrencyForActivity(payment.amount, rental.currency)} rent received from ${rental.tenantName} for ${payment.period}. Receipt ${payment.reference} issued.`,
       `${rental.tenantName} · admin team`,
       "Payment",
+      propertyRecipients(properties.find((property) => property.id === rental.propertyId)),
     ));
     notifyUser(`Rent payment saved. Receipt ${payment.reference} issued.`);
   }
 
   function handleSendReminder(sale) {
+    if (user.role === "owner" || !scopedSales.some((item) => item.id === sale.id)) {
+      notifyUser("Reminder could not be prepared because the sale is outside your account.");
+      return;
+    }
     addActivity(createNotification(
       "Installment reminder prepared",
       `${sale.buyerName} has a ${formatCurrencyForActivity(sale.installmentAmount, sale.currency)} installment for ${sale.propertyTitle}${sale.nextDueDate ? ` due ${sale.nextDueDate}` : ""}.`,
       `${sale.buyerName} · admin team`,
       "Payment",
+      propertyRecipients(properties.find((property) => property.id === sale.propertyId)),
     ));
     notifyUser(`Installment reminder prepared for ${sale.buyerName}. External messages are simulated.`);
   }
@@ -423,6 +559,7 @@ function App() {
         ? { listedBy: "Verified owner", ownerId: String(user.id) }
         : {};
     setListingAttribution(initialValues);
+    setEditingPropertyId(null);
     setPropertyEditorOpen(true);
   }
 
@@ -439,16 +576,16 @@ function App() {
   }
 
   function renderPage() {
-    if (activePage === "Dashboard") return <Dashboard properties={scopedProperties} enquiries={scopedEnquiries} agents={scopedAgents} sales={scopedSales} payments={scopedPayments} notifications={scopedNotifications} onNavigate={navigate} onAddProperty={beginAddProperty} user={user} />;
-    if (activePage === "Properties") return <Properties properties={scopedProperties} enquiries={scopedEnquiries} onRequestAdd={beginAddProperty} onSaveEnquiry={handleAddEnquiry} />;
+    if (activePage === "Dashboard") return <Dashboard properties={scopedProperties} enquiries={scopedEnquiries} agents={scopedAgents} sales={scopedSales} payments={isAdmin ? scopedPayments : []} rentals={scopedRentals} rentPayments={scopedRentPayments} notifications={scopedNotifications} onNavigate={navigate} onAddProperty={beginAddProperty} user={user} />;
+    if (activePage === "Properties") return <Properties properties={scopedProperties} enquiries={scopedEnquiries} onRequestAdd={beginAddProperty} onEditProperty={beginEditProperty} onSaveEnquiry={handleAddEnquiry} />;
     if (activePage === "Enquiries") return <Enquiries enquiries={scopedEnquiries} properties={scopedProperties} onAddEnquiry={handleAddEnquiry} onUpdateStatus={handleUpdateEnquiryStatus} onNotifyMatch={handleNotifyMatch} readOnly={user.role === "owner"} />;
     if (activePage === "Agents" && isAdmin) return <People kind="Agents" people={agents} onAddPerson={handleAddPerson} onListProperty={handleListForPerson} onUpdateVerification={(id, verified) => handleUpdateVerification("Agents", id, verified)} />;
     if (activePage === "Owners" && isAdmin) return <People kind="Owners" people={owners} onAddPerson={handleAddPerson} onListProperty={handleListForPerson} onUpdateVerification={(id, verified) => handleUpdateVerification("Owners", id, verified)} />;
-    if (activePage === "Rentals" && user.role !== "owner") return <Rentals rentals={scopedRentals} properties={scopedProperties} rentPayments={scopedRentPayments} onAddRental={handleAddRental} onRecordRentPayment={handleRecordRentPayment} canRecordPayment={isAdmin} />;
-    if (activePage === "Sales" && user.role !== "owner") return <Sales sales={scopedSales} properties={scopedProperties} enquiries={scopedEnquiries} payments={scopedPayments} onAddSale={handleAddSale} onSendReminder={handleSendReminder} onGoPayments={(saleId) => { setHighlightedSaleId(saleId); navigate("Payments"); }} canRecordPayment={isAdmin} />;
+    if (activePage === "Rentals") return <Rentals rentals={scopedRentals} properties={scopedProperties} rentPayments={scopedRentPayments} onAddRental={handleAddRental} onRecordRentPayment={handleRecordRentPayment} canRecordPayment={isAdmin} canViewReceipts={isAdmin || user.role === "owner"} canRegisterRental={user.role !== "owner"} readOnly={user.role === "owner"} />;
+    if (activePage === "Sales" && user.role !== "owner") return <Sales sales={scopedSales} properties={scopedProperties} enquiries={scopedEnquiries} payments={isAdmin ? scopedPayments : []} onAddSale={handleAddSale} onSendReminder={handleSendReminder} onGoPayments={(saleId) => { setHighlightedSaleId(saleId); navigate("Payments"); }} canRecordPayment={isAdmin} canViewPaymentHistory={isAdmin} />;
     if (activePage === "Payments" && isAdmin) return <Payments payments={payments} sales={sales} highlightedSaleId={highlightedSaleId} onRecordPayment={handleRecordPayment} />;
-    if (activePage === "Notifications" && isAdmin) return <Notifications notifications={notifications} />;
-    return <Dashboard properties={scopedProperties} enquiries={scopedEnquiries} agents={scopedAgents} sales={scopedSales} payments={scopedPayments} notifications={scopedNotifications} onNavigate={navigate} onAddProperty={beginAddProperty} user={user} />;
+    if (activePage === "Notifications") return <Notifications notifications={scopedNotifications} user={user} />;
+    return <Dashboard properties={scopedProperties} enquiries={scopedEnquiries} agents={scopedAgents} sales={scopedSales} payments={isAdmin ? scopedPayments : []} rentals={scopedRentals} rentPayments={scopedRentPayments} notifications={scopedNotifications} onNavigate={navigate} onAddProperty={beginAddProperty} user={user} />;
   }
 
   if (!user) return <DemoLogin onLogin={handleLogin} />;
@@ -457,12 +594,12 @@ function App() {
     <div className="min-h-screen bg-[#f6f7f9] text-slate-800">
       <Sidebar activePage={activePage} setActivePage={navigate} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} role={user.role} />
       <div className="min-h-screen min-w-0 md:ml-64">
-        <Header onToggleSidebar={() => setSidebarOpen((previous) => !previous)} onOpenNotifications={() => navigate("Notifications")} notificationCount={notifications.length} user={user} onLogout={handleLogout} />
+        <Header onToggleSidebar={() => setSidebarOpen((previous) => !previous)} onOpenNotifications={() => navigate("Notifications")} notificationCount={scopedNotifications.length} user={user} onLogout={handleLogout} />
         <main className="px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-360">{renderPage()}</div>
         </main>
       </div>
-      {propertyEditorOpen && <PropertyEditor initialValues={listingAttribution} agents={scopedAgents} owners={scopedOwners} onClose={() => { setPropertyEditorOpen(false); setListingAttribution({}); }} onSave={handleAddProperty} />}
+      {propertyEditorOpen && <PropertyEditor initialValues={listingAttribution} agents={scopedAgents} owners={scopedOwners} isEditing={editingPropertyId !== null} onClose={() => { setPropertyEditorOpen(false); setEditingPropertyId(null); setListingAttribution({}); }} onSave={editingPropertyId ? handleUpdateProperty : handleAddProperty} />}
       {toast && <div role="status" aria-live="polite" className="fixed bottom-4 left-4 right-4 z-70 mx-auto flex max-w-xl items-start gap-3 rounded-2xl bg-[#0F2A43] px-5 py-4 text-sm font-medium text-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-400" /><span>{toast}</span></div>}
     </div>
   );

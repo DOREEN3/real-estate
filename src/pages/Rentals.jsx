@@ -99,7 +99,7 @@ function RentPaymentEditor({ rentals, initialRentalId, onClose, onSave }) {
   );
 }
 
-function Rentals({ rentals, properties, rentPayments, onAddRental, onRecordRentPayment, canRecordPayment = true }) {
+function Rentals({ rentals, properties, rentPayments, onAddRental, onRecordRentPayment, canRecordPayment = true, canViewReceipts = true, canRegisterRental = true, readOnly = false }) {
   const [showRentalEditor, setShowRentalEditor] = useState(false);
   const [paymentRentalId, setPaymentRentalId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -134,7 +134,7 @@ function Rentals({ rentals, properties, rentPayments, onAddRental, onRecordRentP
 
   return (
     <div>
-      <PageHeading eyebrow="Tenancies and rent collection" title="Rentals" description="Manage tenants, track monthly rent due and paid, and issue payment receipts." action={<button type="button" onClick={() => setShowRentalEditor(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]"><Plus size={18} /> Register rental</button>} />
+      <PageHeading eyebrow="Tenancies and rent collection" title="Rentals" description={readOnly ? "View tenant accounts, monthly rent status and receipts for your properties." : "Manage tenants, track monthly rent due and paid, and issue payment receipts."} action={canRegisterRental && <button type="button" onClick={() => setShowRentalEditor(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]"><Plus size={18} /> Register rental</button>} />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         {[
           ["Active rentals", rentals.length, "Tenant accounts", CircleDollarSign],
@@ -155,16 +155,16 @@ function Rentals({ rentals, properties, rentPayments, onAddRental, onRecordRentP
             </div>
             {canRecordPayment && <button type="button" onClick={() => setPaymentRentalId(rental.id)} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#0F2A43] px-3 py-2 text-xs font-semibold text-white hover:bg-[#173e60]"><Plus size={14} /> Record rent</button>}
           </article>;
-        })}</div> : <div className="p-12 text-center"><p className="font-semibold text-[#0F2A43]">No rental accounts yet</p><p className="mt-1 text-sm text-slate-500">Register a tenant on an available For Rent property to start tracking monthly rent.</p></div>}
+        })}</div> : <div className="p-12 text-center"><p className="font-semibold text-[#0F2A43]">No rental accounts yet</p><p className="mt-1 text-sm text-slate-500">{readOnly ? "There are no rental accounts linked to your properties yet." : "Register a tenant on an available For Rent property to start tracking monthly rent."}</p></div>}
       </section>
-      <section className="mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      {canViewReceipts && <section className="mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         <div className="border-b border-slate-100 p-5"><h2 className="font-bold text-[#0F2A43]">Rent payment receipts</h2></div>
         {rentPayments.length ? <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left">
           <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500"><tr>{["Receipt", "Tenant / property", "Rent month", "Date", "Method", "Amount", ""].map((heading) => <th key={heading} className="px-5 py-3 font-bold">{heading}</th>)}</tr></thead>
           <tbody className="divide-y divide-slate-100">{rentPayments.map((payment) => <tr key={payment.id} className="text-sm hover:bg-slate-50/60"><td className="px-5 py-4 font-mono text-xs font-semibold text-[#0F2A43]">{payment.reference}</td><td className="px-5 py-4"><p className="font-semibold text-[#0F2A43]">{payment.tenantName}</p><p className="mt-1 text-xs text-slate-500">{payment.propertyTitle}</p></td><td className="px-5 py-4 text-slate-500">{formatDate(`${payment.period}-01`)}</td><td className="px-5 py-4 text-slate-500">{formatDate(payment.date)}</td><td className="px-5 py-4 text-slate-500">{payment.method}</td><td className="px-5 py-4 font-bold text-[#0F2A43]">{formatMoney(payment.amount, payment.currency)}</td><td className="px-5 py-4"><button type="button" onClick={() => setSelectedReceipt(payment)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-[#0F2A43] hover:bg-slate-100"><ReceiptText size={14} /> Receipt</button></td></tr>)}</tbody>
         </table></div> : <div className="p-10 text-center text-sm text-slate-500">No rent payments recorded yet.</div>}
-      </section>
-      {showRentalEditor && <RentalEditor properties={properties} rentals={rentals} onClose={() => setShowRentalEditor(false)} onSave={onAddRental} />}
+      </section>}
+      {showRentalEditor && canRegisterRental && <RentalEditor properties={properties} rentals={rentals} onClose={() => setShowRentalEditor(false)} onSave={onAddRental} />}
       {paymentRentalId !== null && <RentPaymentEditor rentals={rentals} initialRentalId={paymentRentalId} onClose={() => setPaymentRentalId(null)} onSave={onRecordRentPayment} />}
       {selectedReceipt && <Modal title="Rent payment receipt" description={`Receipt reference ${selectedReceipt.reference}`} onClose={() => setSelectedReceipt(null)} size="max-w-lg">
         <div className="print-receipt p-6 sm:p-8">

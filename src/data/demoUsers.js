@@ -7,13 +7,6 @@ export const demoUsers = [
     id: null,
   },
   {
-    email: "lydia@golderp.example",
-    password: "agent123",
-    name: "Lydia Njeri",
-    role: "agent",
-    id: 102,
-  },
-  {
     email: "brian@golderp.example",
     password: "brian123",
     name: "Brian Otieno",

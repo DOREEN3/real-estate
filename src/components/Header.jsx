@@ -22,7 +22,7 @@ function Header({ onToggleSidebar, onOpenNotifications, notificationCount = 0, u
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        {user.role === "admin" && <button
+        <button
           type="button"
           onClick={onOpenNotifications}
           aria-label={`${notificationCount} notifications, open activity`}
@@ -30,7 +30,7 @@ function Header({ onToggleSidebar, onOpenNotifications, notificationCount = 0, u
         >
           <Bell size={20} />
           {notificationCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D4A72C] px-1 text-[9px] font-bold text-[#0F2A43]">{notificationCount > 9 ? "9+" : notificationCount}</span>}
-        </button>}
+        </button>
 
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D4A72C] font-bold text-white">

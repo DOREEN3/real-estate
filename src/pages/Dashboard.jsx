@@ -1,24 +1,44 @@
-import { ArrowRight, BellRing, Building2, CircleDollarSign, Handshake, MessageSquareText, Plus, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, BellRing, Building2, CalendarClock, CircleDollarSign, Handshake, MessageSquareText, Plus, Sparkles, UsersRound } from "lucide-react";
 import PageHeading from "../components/PageHeading";
 import PropertyCard from "../components/PropertyCard";
 import { formatCurrencyTotals, formatDate, formatMoney, getMatches } from "../lib/demo";
 
-function Dashboard({ properties, enquiries, agents, sales, payments, notifications, onNavigate, onAddProperty, user }) {
+function Dashboard({ properties, enquiries, agents, sales, payments, rentals, rentPayments, notifications, onNavigate, onAddProperty, user }) {
   const newEnquiries = enquiries.filter((enquiry) => enquiry.status === "New").length;
   const available = properties.filter((property) => property.status === "Available").length;
   const matches = properties.reduce((count, property) => count + getMatches(property, enquiries).length, 0);
   const collected = formatCurrencyTotals(payments);
+  const currentPeriod = new Date().toISOString().slice(0, 7);
+  const activeRentals = rentals.filter((rental) => rental.status === "Active");
+  const rentalPropertiesCount = properties.filter((property) => property.listingType === "For Rent").length;
+  const currentRentPayments = rentPayments.filter((payment) => payment.period === currentPeriod);
+  const rentCollected = formatCurrencyTotals(currentRentPayments);
+  const rentOutstanding = formatCurrencyTotals(activeRentals.map((rental) => ({
+    currency: rental.currency || "KSH",
+    amount: Math.max(0, Number(rental.monthlyRent) - currentRentPayments
+      .filter((payment) => payment.rentalId === rental.id)
+      .reduce((sum, payment) => sum + Number(payment.amount), 0)),
+  })));
+  const isOwner = user.role === "owner";
   const collectionMetric = user.role === "admin"
     ? { label: "Collections", value: collected, note: `${sales.length} sale accounts`, target: "Payments" }
     : user.role === "agent"
-      ? { label: "Collections", value: collected, note: `${sales.length} sale accounts`, target: "Sales" }
+      ? { label: "Related sales", value: sales.length, note: "Agreements for assigned properties", target: "Sales" }
       : { label: "Owned properties", value: properties.length, note: "Listings linked to your account", target: "Properties" };
-  const metrics = [
+  const metrics = isOwner ? [
+    { label: "My properties", value: properties.length, note: "Listings linked to your account", icon: Building2, tone: "bg-blue-50 text-blue-700", target: "Properties" },
+    { label: "Occupied rentals", value: `${activeRentals.length} / ${rentalPropertiesCount}`, note: "Occupied / rental listings", icon: Handshake, tone: "bg-violet-50 text-violet-700", target: "Rentals" },
+    { label: "Rent collected this month", value: rentCollected, note: currentPeriod, icon: CircleDollarSign, tone: "bg-emerald-50 text-emerald-700", target: "Rentals" },
+    { label: "Rent outstanding", value: rentOutstanding, note: `${currentPeriod} remaining balance`, icon: CalendarClock, tone: "bg-amber-50 text-amber-800", target: "Rentals" },
+  ] : [
     { label: "Available listings", value: available, note: `${properties.length} total properties`, icon: Building2, tone: "bg-blue-50 text-blue-700", target: "Properties" },
     { label: "Active enquiries", value: enquiries.filter((enquiry) => enquiry.status !== "Closed").length, note: `${newEnquiries} new leads to follow up`, icon: MessageSquareText, tone: "bg-violet-50 text-violet-700", target: "Enquiries" },
     { label: "Potential matches", value: matches, note: "Lead-to-property matches", icon: Sparkles, tone: "bg-emerald-50 text-emerald-700", target: "Enquiries" },
-    { ...collectionMetric, icon: user.role === "owner" ? Building2 : CircleDollarSign, tone: "bg-amber-50 text-amber-800" },
+    { ...collectionMetric, icon: CircleDollarSign, tone: "bg-amber-50 text-amber-800" },
   ];
+  const featuredProperties = isOwner
+    ? [...properties].sort((first, second) => Number(second.listingType === "For Rent") - Number(first.listingType === "For Rent")).slice(0, 2)
+    : properties.filter((property) => property.status === "Available").slice(0, 2);
 
   return (
     <div>
@@ -28,8 +48,8 @@ function Dashboard({ properties, enquiries, agents, sales, payments, notificatio
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.65fr_1fr]">
         <section>
-          <div className="mb-4 flex items-end justify-between"><div><h2 className="text-lg font-bold text-[#0F2A43]">Featured properties</h2><p className="mt-1 text-sm text-slate-500">Latest available properties in the portfolio</p></div><button type="button" onClick={() => onNavigate("Properties")} className="inline-flex items-center gap-1 text-sm font-semibold text-[#0F2A43] hover:text-[#B88912]">View all <ArrowRight size={15} /></button></div>
-          <div className="grid gap-4 md:grid-cols-2">{properties.filter((property) => property.status === "Available").slice(0, 2).map((property) => <PropertyCard key={property.id} property={property} onView={() => onNavigate("Properties")} />)}</div>
+          <div className="mb-4 flex items-end justify-between"><div><h2 className="text-lg font-bold text-[#0F2A43]">{isOwner ? "Your properties" : "Featured properties"}</h2><p className="mt-1 text-sm text-slate-500">{isOwner ? "Properties linked to your owner account" : "Latest available properties in the portfolio"}</p></div><button type="button" onClick={() => onNavigate("Properties")} className="inline-flex items-center gap-1 text-sm font-semibold text-[#0F2A43] hover:text-[#B88912]">View all <ArrowRight size={15} /></button></div>
+          <div className="grid gap-4 md:grid-cols-2">{featuredProperties.map((property) => <PropertyCard key={property.id} property={property} onView={() => onNavigate("Properties")} />)}</div>
           {properties.length === 0 && <p className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500">No properties saved yet.</p>}
         </section>
 
@@ -48,7 +68,7 @@ function Dashboard({ properties, enquiries, agents, sales, payments, notificatio
             <div className="mt-4 flex justify-between border-t border-white/15 pt-4 text-sm"><span className="text-white/70">Verified agents</span><strong>{agents.filter((agent) => agent.verified).length}</strong></div>
             <button type="button" onClick={() => onNavigate("Agents")} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#eac95f]">Manage agent network <ArrowRight size={15} /></button>
           </section>}
-          {sales.length > 0 && <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-[#B88912]">Next collection</p><h2 className="mt-2 font-bold text-[#0F2A43]">{sales[0].buyerName}</h2><p className="mt-1 text-xs text-slate-500">{sales[0].propertyTitle}</p></div><Handshake className="text-emerald-700" size={20} /></div><p className="mt-4 text-sm text-slate-600">{formatMoney(sales[0].installmentAmount)} · {sales[0].nextDueDate ? formatDate(sales[0].nextDueDate) : "No date scheduled"}</p><button type="button" onClick={() => onNavigate("Sales")} className="mt-3 text-xs font-semibold text-[#0F2A43]">View sale account →</button></section>}
+          {sales.length > 0 && user.role === "admin" && <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-[#B88912]">Next collection</p><h2 className="mt-2 font-bold text-[#0F2A43]">{sales[0].buyerName}</h2><p className="mt-1 text-xs text-slate-500">{sales[0].propertyTitle}</p></div><Handshake className="text-emerald-700" size={20} /></div><p className="mt-4 text-sm text-slate-600">{formatMoney(sales[0].installmentAmount)} · {sales[0].nextDueDate ? formatDate(sales[0].nextDueDate) : "No date scheduled"}</p><button type="button" onClick={() => onNavigate("Sales")} className="mt-3 text-xs font-semibold text-[#0F2A43]">View sale account →</button></section>}
         </aside>
       </div>
       <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-xs leading-5 text-amber-900"><strong>Prototype notice:</strong> Changes save in this browser only. Email, SMS and WhatsApp automations are simulated activity; no messages are sent.</div>

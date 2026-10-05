@@ -8,7 +8,7 @@ import { formatMoney, getMatches, getPropertyImages, inputClass, sameListingType
 
 const blankFilters = { search: "", listingType: "", type: "", status: "", currency: "", minPrice: "", maxPrice: "" };
 
-function Properties({ properties, enquiries, onRequestAdd, onSaveEnquiry }) {
+function Properties({ properties, enquiries, onRequestAdd, onEditProperty, onSaveEnquiry }) {
   const [filters, setFilters] = useState(blankFilters);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [enquiryProperty, setEnquiryProperty] = useState(null);
@@ -106,7 +106,10 @@ function Properties({ properties, enquiries, onRequestAdd, onSaveEnquiry }) {
             </div>
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-between">
               <p className="self-center text-xs text-slate-400">Enquiries go to our team first; seller and agent details stay private.</p>
-              <button type="button" onClick={() => { setEnquiryProperty(selectedProperty); setSelectedProperty(null); }} className="rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]">Record buyer enquiry</button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {onEditProperty && <button type="button" onClick={() => { onEditProperty(selectedProperty); setSelectedProperty(null); }} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-[#0F2A43] hover:bg-slate-50">Edit property</button>}
+                <button type="button" onClick={() => { setEnquiryProperty(selectedProperty); setSelectedProperty(null); }} className="rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]">Record buyer enquiry</button>
+              </div>
             </div>
           </div>
         </Modal>

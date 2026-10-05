@@ -55,7 +55,7 @@ function SaleEditor({ properties, enquiries, onClose, onSave }) {
   );
 }
 
-function Sales({ sales, properties, enquiries, payments, onAddSale, onSendReminder, onGoPayments, canRecordPayment = true }) {
+function Sales({ sales, properties, enquiries, payments, onAddSale, onSendReminder, onGoPayments, canRecordPayment = true, canViewPaymentHistory = true }) {
   const [showEditor, setShowEditor] = useState(false);
   const [statementSale, setStatementSale] = useState(null);
   const totalValue = formatCurrencyTotals(sales);
@@ -68,35 +68,42 @@ function Sales({ sales, properties, enquiries, payments, onAddSale, onSendRemind
 
   return (
     <div>
-      <PageHeading eyebrow="Deal management" title="Sales" description="Register completed agreements, track installment plans and contact buyers about upcoming payments." action={<button type="button" onClick={() => setShowEditor(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]"><Plus size={18} /> Register sale</button>} />
+      <PageHeading eyebrow="Deal management" title="Sales" description={canViewPaymentHistory ? "Register completed agreements, track installment plans and contact buyers about upcoming payments." : "Register assigned-property agreements and view their installment schedules."} action={<button type="button" onClick={() => setShowEditor(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A43] px-5 py-3 text-sm font-semibold text-white hover:bg-[#173e60]"><Plus size={18} /> Register sale</button>} />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         {[
           ["Sales pipeline", totalValue, `${sales.length} registered deals`, CircleDollarSign],
-          ["Payments received", collected, "Across all sale accounts", ReceiptText],
+          ...(canViewPaymentHistory
+            ? [["Payments received", collected, "Across all sale accounts", ReceiptText]]
+            : [["Active agreements", sales.filter((sale) => sale.status !== "Completed").length, "Related sale accounts", CircleDollarSign]]),
           ["Installments due", sales.filter((sale) => sale.nextDueDate).length, "Scheduled payment plans", CalendarClock],
         ].map(([title, value, caption, Icon]) => <div key={title} className="flex items-start justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"><div><p className="text-sm text-slate-500">{title}</p><p className="mt-2 text-2xl font-bold text-[#0F2A43]">{value}</p><p className="mt-1 text-xs text-slate-400">{caption}</p></div><span className="rounded-xl bg-[#f8f0d8] p-3 text-[#0F2A43]"><Icon size={20} /></span></div>)}
       </div>
       <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="border-b border-slate-100 p-5"><h2 className="font-bold text-[#0F2A43]">Sale agreements</h2><p className="mt-1 text-xs text-slate-500">Payments update the statement balance and receipts.</p></div>
-        {sales.length === 0 ? <div className="p-12 text-center"><p className="font-semibold text-[#0F2A43]">No sales registered yet</p><p className="mt-1 text-sm text-slate-500">Register your first agreement to start tracking payments.</p></div> : <div className="divide-y divide-slate-100">{sales.map((sale) => {
-          const paid = salePayments(sale.id).reduce((sum, payment) => sum + Number(payment.amount), 0);
+        <div className="border-b border-slate-100 p-5"><h2 className="font-bold text-[#0F2A43]">Sale agreements</h2><p className="mt-1 text-xs text-slate-500">{canViewPaymentHistory ? "Payments update the statement balance and receipts." : "Assigned-property agreements and installment schedules."}</p></div>
+        {sales.length === 0 ? <div className="p-12 text-center"><p className="font-semibold text-[#0F2A43]">No sales registered yet</p><p className="mt-1 text-sm text-slate-500">{canViewPaymentHistory ? "Register your first agreement to start tracking payments." : "Register your first agreement for an assigned property."}</p></div> : <div className="divide-y divide-slate-100">{sales.map((sale) => {
+          const paid = canViewPaymentHistory ? salePayments(sale.id).reduce((sum, payment) => sum + Number(payment.amount), 0) : 0;
           const balance = Math.max(0, Number(sale.salePrice) - paid);
           const progress = Math.min(100, Math.round((paid / Number(sale.salePrice)) * 100));
+          const hasOutstandingBalance = canViewPaymentHistory ? balance > 0 : sale.status !== "Completed";
           return <article key={sale.id} className="p-5 sm:p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-[#0F2A43]">{sale.propertyTitle}</h3><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">{sale.status}</span></div>
                 <p className="mt-1 text-sm text-slate-500">Buyer: {sale.buyerName} · Agreement #{sale.id}</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  {[["Agreed price", formatMoney(sale.salePrice, currencyForSale(sale))], ["Received", formatMoney(paid, currencyForSale(sale))], ["Remaining", formatMoney(balance, currencyForSale(sale))]].map(([label, amount]) => <div key={label}><p className="text-[11px] uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-sm font-bold text-[#0F2A43]">{amount}</p></div>)}
+                  {(canViewPaymentHistory
+                    ? [["Agreed price", formatMoney(sale.salePrice, currencyForSale(sale))], ["Received", formatMoney(paid, currencyForSale(sale))], ["Remaining", formatMoney(balance, currencyForSale(sale))]]
+                    : [["Agreed price", formatMoney(sale.salePrice, currencyForSale(sale))], ["Installment plan", formatMoney(sale.installmentAmount, currencyForSale(sale))], ["Next due", sale.nextDueDate ? formatDate(sale.nextDueDate) : "No date scheduled"]]
+                  ).map(([label, amount]) => <div key={label}><p className="text-[11px] uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-sm font-bold text-[#0F2A43]">{amount}</p></div>)}
                 </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${progress}%` }} /></div>
-                <p className="mt-1.5 text-xs text-slate-400">{progress}% received{sale.nextDueDate ? ` · Next due ${formatDate(sale.nextDueDate)}` : ""}</p>
+                {canViewPaymentHistory
+                  ? <><div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${progress}%` }} /></div><p className="mt-1.5 text-xs text-slate-400">{progress}% received{sale.nextDueDate ? ` · Next due ${formatDate(sale.nextDueDate)}` : ""}</p></>
+                  : sale.nextDueDate && <p className="mt-1.5 text-xs text-slate-400">Next installment due {formatDate(sale.nextDueDate)}</p>}
               </div>
               <div className="flex flex-wrap gap-2 xl:justify-end">
-                <button type="button" onClick={() => setStatementSale(sale)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-[#0F2A43] hover:bg-slate-50"><FileText size={15} /> Statement</button>
+                {canViewPaymentHistory && <button type="button" onClick={() => setStatementSale(sale)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-[#0F2A43] hover:bg-slate-50"><FileText size={15} /> Statement</button>}
                 {canRecordPayment && <button type="button" onClick={() => onGoPayments(sale.id)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F2A43] px-3 py-2 text-xs font-semibold text-white hover:bg-[#173e60]"><Plus size={14} /> Record payment</button>}
-                {balance > 0 && <button type="button" onClick={() => onSendReminder(sale)} className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100"><ArrowRight size={14} /> Send reminder</button>}
+                {hasOutstandingBalance && <button type="button" onClick={() => onSendReminder(sale)} className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100"><ArrowRight size={14} /> Send reminder</button>}
               </div>
             </div>
           </article>;

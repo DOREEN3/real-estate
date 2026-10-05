@@ -25,8 +25,8 @@ function Sidebar({ activePage, setActivePage, isOpen, onClose, role }) {
   ];
   const rolePages = {
     admin: allMenuItems.map((item) => item.name),
-    agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales"],
-    owner: ["Dashboard", "Properties", "Enquiries"],
+    agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales", "Notifications"],
+    owner: ["Dashboard", "Properties", "Enquiries", "Rentals", "Notifications"],
   };
   const menuItems = allMenuItems.filter((item) => rolePages[role]?.includes(item.name));
 

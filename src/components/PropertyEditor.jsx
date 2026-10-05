@@ -24,9 +24,9 @@ const blankProperty = {
   ownerId: "",
 };
 
-function PropertyEditor({ onClose, onSave, agents, owners, initialValues = {} }) {
+function PropertyEditor({ onClose, onSave, agents, owners, initialValues = {}, isEditing = false }) {
   const [form, setForm] = useState(() => ({ ...blankProperty, ...initialValues }));
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos] = useState(initialValues.images || []);
   const [photoError, setPhotoError] = useState("");
 
   function handleChange(event) {
@@ -76,8 +76,8 @@ function PropertyEditor({ onClose, onSave, agents, owners, initialValues = {} })
 
   return (
     <Modal
-      title="Add a property"
-      description="Create a detailed listing. Verified agents and owners can publish directly."
+      title={isEditing ? "Edit property" : "Add a property"}
+      description={isEditing ? "Update the details of your property listing." : "Create a detailed listing. Verified agents and owners can publish directly."}
       onClose={onClose}
       size="max-w-4xl"
     >
@@ -147,7 +147,7 @@ function PropertyEditor({ onClose, onSave, agents, owners, initialValues = {} })
           <p className="mt-2 text-xs text-slate-400">Listing contact requests are routed to our team. External email and messaging are simulated in this demo.</p>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-3">
+        {!isEditing && <section className="grid gap-4 sm:grid-cols-3">
           <label className="text-sm font-semibold text-slate-700">
             Listed by
             <select name="listedBy" value={form.listedBy} onChange={handleChange} className={`${inputClass} mt-2`}>
@@ -168,11 +168,11 @@ function PropertyEditor({ onClose, onSave, agents, owners, initialValues = {} })
               {owners.filter((owner) => owner.verified).map((owner) => <option key={owner.id} value={owner.id}>{owner.name}</option>)}
             </select>
           </label>
-        </section>
+        </section>}
 
         <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="submit" className="rounded-xl bg-[#0F2A43] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173e60]">Save property</button>
+          <button type="submit" className="rounded-xl bg-[#0F2A43] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173e60]">{isEditing ? "Save changes" : "Save property"}</button>
         </div>
       </form>
     </Modal>

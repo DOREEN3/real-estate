@@ -14,21 +14,20 @@ npm run dev
 | Role | Email | Password |
 | --- | --- | --- |
 | Admin | `admin@golderp.demo` | `admin123` |
-| Agent (Lydia Njeri) | `lydia@golderp.example` | `agent123` |
 | Agent (Brian Otieno) | `brian@golderp.example` | `brian123` |
 | Owner | `miriam@example.com` | `owner123` |
 
-Select an account on the sign-in page to fill in its demo credentials. Sign out to switch accounts. Brian Otieno's demo agent account is assigned to the seeded Cozy 2 Bedroom Flat rental. The demo account list is fixed: adding an agent or owner from the Admin screens creates a contact record, not a login account.
+Select an account on the sign-in page to fill in its demo credentials. Sign out to switch accounts. Brian Otieno's demo agent account is assigned to the seeded Cozy 2 Bedroom Flat rental. The Owner account has its own seeded Kilimani rental and can view its tenant, rent status, and receipts. Lydia Njeri remains a sample agent contact but is not a sign-in account. Adding an agent or owner from the Admin screens creates a contact record, not a login account.
 
 ## Roles and permissions shown in the demo
 
 | Role | Pages | Main actions and data scope |
 | --- | --- | --- |
-| Admin | Dashboard, Properties, Enquiries, Agents, Owners, Rentals, Sales, Payments, Notifications | Sees all demo records; can add listings and enquiries, manage agent/owner records and verification, register rentals and sales, record rent and sale payments, and review simulated activity. |
-| Agent | Dashboard, Properties, Enquiries, Rentals, Sales | Sees listings assigned to that agent, related/matching leads, and rental and sale accounts for those listings. Can add listings and enquiries, update enquiry status, send simulated match alerts/reminders, and register rentals and sales. Payment recording is admin-only. |
-| Owner | Dashboard, Properties, Enquiries | Sees listings assigned to that owner and related/matching enquiries. Can add listings; enquiry viewing is read-only. Sales and payment management are not available in the owner workspace. |
+| Admin | Dashboard, Properties, Enquiries, Agents, Owners, Rentals, Sales, Payments, Notifications | Sees all demo records; can add and edit listings, add enquiries, manage agent/owner records and verification, register rentals and sales, record rent and sale payments, and review simulated activity. |
+| Agent | Dashboard, Properties, Enquiries, Rentals, Sales, Notifications | Sees listings assigned to that agent, related/matching leads, and rental and sale accounts for those listings. Can add and edit assigned listings, add enquiries, update related enquiry status, send simulated match alerts/reminders, and register rentals and sales for assigned properties. Rental records show the current rent status/monthly summary but not receipts; sale agreements show contract/installment details but not payment history, sale payment balances, or statements. Sees only alerts addressed to their agent account; payment recording is admin-only. |
+| Owner | Dashboard, Properties, Enquiries, Rentals, Notifications | Sees only properties assigned to that owner, related enquiries, tenants, rent status, rent collected/outstanding summaries, receipts, and notifications addressed to their owner account. Can add and edit their own property listings. Rentals and enquiry views are read-only; sales, payment entry, other owners' records, and admin tools are not available. |
 
-Role checks and data filtering currently happen in the React app. They are demo behavior, not security controls; a backend must independently authenticate the user, authorize every operation, and enforce record ownership.
+Role checks and data filtering currently happen in the React app. They are demo behavior, not security controls; a backend must independently authenticate the user, authorize every operation, and enforce record ownership. Demo notifications are scoped by recipient role and profile ID; external delivery is not implemented.
 
 ## Main workflows
 
@@ -47,17 +46,17 @@ The pipeline filters by both status and source. Enquiries can be matched against
 
 ### Sales and payments
 
-Sales reference a property and record buyer, agreed price, deposit, and installment schedule. Registering a sale creates a demo deposit receipt and marks the property as sold. Admin can record further payments and view payment history/statements. Reminders and receipts are local demo activity only.
+Sales reference a property and record buyer, agreed price, deposit, and installment schedule. Registering a sale creates a demo deposit receipt and marks the property as sold. Admin can record further payments and view payment history/statements; agents can view related sale agreements and installment schedules, but not payment history, sale payment balances, or statements. Reminders and receipts are local demo activity only.
 
 ### Rentals and rent payments
 
-Register a rental against an available **For Rent** property with the tenant, monthly rent, and due day. This marks the property as rented and creates a tenant account. The Rentals page totals payments against each rent month and shows **Paid** once recorded payments meet that month's rent; partial, due, and overdue amounts remain visible. Admins can record full or partial rent payments, choose the month and method, and issue/print receipts. Rent and sale accounts and receipts are tracked separately. All rental and payment data is local demo activity and does not verify money with a bank or mobile-money provider.
+Register a rental against an available **For Rent** property with the tenant, monthly rent, and due day. This marks the property as rented and creates a tenant account. The Rentals page totals payments against each rent month and shows **Paid** once recorded payments meet that month's rent; partial, due, and overdue amounts remain visible. Admins can record full or partial rent payments, choose the month and method, and issue/print receipts. Owners can view receipts for their own rental properties; agents can view related rental status but not receipts. Rent and sale accounts and receipts are tracked separately. All rental and payment data is local demo activity and does not verify money with a bank or mobile-money provider.
 
 ## Data relationships for backend planning
 
 These relationships describe the current demo and a reasonable starting point for the API/database design; they are not a finalized schema:
 
-- **User** has a role (`admin`, `agent`, or `owner`). An agent/owner login should be linked to its corresponding agent/owner profile. The current demo only has one fixed login for each role.
+- **User** has a role (`admin`, `agent`, or `owner`). An agent/owner login should be linked to its corresponding agent/owner profile. The demo login options are fixed examples; creating a contact record does not provision a login.
 - **Property** may reference an assigned agent and owner. The demo uses `agentId` and `ownerId`; either can be empty for an unassigned contact.
 - **Enquiry** has a source, preferred contact method, status, buyer requirements, and may reference a property and/or assigned agent. Matching may associate one enquiry with multiple suitable properties; a match should not be confused with an explicit property interest.
 - **Sale** references a property and contains the buyer and agreement/payment-plan details.
