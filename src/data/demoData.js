@@ -4,7 +4,7 @@ export const initialProperties = [
   ...properties.map((property) => ({
     ...property,
     listingType: property.listingType.toLowerCase() === "bnb" ? "BnB" : property.listingType,
-    status: property.id === 2 ? "Reserved" : property.status,
+    status: property.id === 2 ? "Reserved" : property.id === 3 ? "Rented" : property.status,
     location: { ...property.location },
     images: property.images.filter((image) => /^data:|^\/assets\/|^\/properties\/|^https?:\/\//.test(image)),
   })),
@@ -153,6 +153,37 @@ export const initialPayments = [
   { id: 801, saleId: 701, propertyTitle: "Luxury Penthouse with City View", buyerName: "Daniel Kimani", currency: "KSH", amount: 600000, method: "Bank transfer", reference: "RCP-2026-0801", date: "2026-08-15" },
   { id: 802, saleId: 701, propertyTitle: "Luxury Penthouse with City View", buyerName: "Daniel Kimani", currency: "KSH", amount: 150000, method: "M-Pesa", reference: "RCP-2026-0912", date: "2026-09-15" },
   { id: 803, saleId: 701, propertyTitle: "Luxury Penthouse with City View", buyerName: "Daniel Kimani", currency: "KSH", amount: 150000, method: "Bank transfer", reference: "RCP-2026-0926", date: "2026-09-26" },
+];
+
+export const initialRentals = [
+  {
+    id: 1001,
+    propertyId: 3,
+    propertyTitle: "Cozy 2 Bedroom Flat",
+    tenantName: "Faith Naliaka",
+    tenantEmail: "faith.naliaka@example.com",
+    currency: "KSH",
+    monthlyRent: 65000,
+    dueDay: 5,
+    status: "Active",
+    createdAt: "2026-08-01T09:00:00.000Z",
+  },
+];
+
+export const initialRentPayments = [
+  {
+    id: 1101,
+    rentalId: 1001,
+    propertyTitle: "Cozy 2 Bedroom Flat",
+    tenantName: "Faith Naliaka",
+    currency: "KSH",
+    amount: 65000,
+    period: "2026-09",
+    method: "M-Pesa",
+    reference: "RNT-2026-0912",
+    date: "2026-09-05",
+    note: "September rent",
+  },
 ];
 
 export const initialNotifications = [

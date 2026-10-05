@@ -23,8 +23,8 @@ Select an account on the sign-in page to fill in its demo credentials. Sign out 
 
 | Role | Pages | Main actions and data scope |
 | --- | --- | --- |
-| Admin | Dashboard, Properties, Enquiries, Agents, Owners, Sales, Payments, Notifications | Sees all demo records; can add listings and enquiries, manage agent/owner records and verification, register sales, record payments, and review simulated activity. |
-| Agent | Dashboard, Properties, Enquiries, Sales | Sees listings assigned to that agent, related/matching leads, and sales for those listings. Can add listings and enquiries, update enquiry status, send simulated match alerts/reminders, and register sales. Payment recording is admin-only. |
+| Admin | Dashboard, Properties, Enquiries, Agents, Owners, Rentals, Sales, Payments, Notifications | Sees all demo records; can add listings and enquiries, manage agent/owner records and verification, register rentals and sales, record rent and sale payments, and review simulated activity. |
+| Agent | Dashboard, Properties, Enquiries, Rentals, Sales | Sees listings assigned to that agent, related/matching leads, and rental and sale accounts for those listings. Can add listings and enquiries, update enquiry status, send simulated match alerts/reminders, and register rentals and sales. Payment recording is admin-only. |
 | Owner | Dashboard, Properties, Enquiries | Sees listings assigned to that owner and related/matching enquiries. Can add listings; enquiry viewing is read-only. Sales and payment management are not available in the owner workspace. |
 
 Role checks and data filtering currently happen in the React app. They are demo behavior, not security controls; a backend must independently authenticate the user, authorize every operation, and enforce record ownership.
@@ -48,6 +48,10 @@ The pipeline filters by both status and source. Enquiries can be matched against
 
 Sales reference a property and record buyer, agreed price, deposit, and installment schedule. Registering a sale creates a demo deposit receipt and marks the property as sold. Admin can record further payments and view payment history/statements. Reminders and receipts are local demo activity only.
 
+### Rentals and rent payments
+
+Register a rental against an available **For Rent** property with the tenant, monthly rent, and due day. This marks the property as rented and creates a tenant account. The Rentals page totals payments against each rent month and shows **Paid** once recorded payments meet that month's rent; partial, due, and overdue amounts remain visible. Admins can record full or partial rent payments, choose the month and method, and issue/print receipts. Rent and sale accounts and receipts are tracked separately. All rental and payment data is local demo activity and does not verify money with a bank or mobile-money provider.
+
 ## Data relationships for backend planning
 
 These relationships describe the current demo and a reasonable starting point for the API/database design; they are not a finalized schema:
@@ -57,6 +61,8 @@ These relationships describe the current demo and a reasonable starting point fo
 - **Enquiry** has a source, preferred contact method, status, buyer requirements, and may reference a property and/or assigned agent. Matching may associate one enquiry with multiple suitable properties; a match should not be confused with an explicit property interest.
 - **Sale** references a property and contains the buyer and agreement/payment-plan details.
 - **Payment** references a sale; sale payment totals determine the remaining balance.
+- **Rental** references a property and contains the tenant, monthly rent, due day, and tenancy status.
+- **Rent payment** references a rental and a rent month; payments for that month determine whether it is due, partially paid, overdue, or paid.
 - **Notification/activity** currently records a message, category, timestamp, and audience as display text. Real notification delivery, recipients, and delivery status are not implemented.
 
 When building the backend, use stable server-generated IDs and explicit foreign keys/relations rather than relying on display names or the demo's browser-generated IDs. Confirm business rules for agent assignment, enquiry ownership, sale creation, verification, and owner visibility before enforcing them in the API.
@@ -67,7 +73,7 @@ Replace or revisit the following before production:
 
 1. **Authentication:** Replace the hard-coded credentials in `src/data/demoUsers.js` and browser session state with server-backed sign-in, secure password handling, session/token lifecycle, and logout.
 2. **Authorization:** Enforce role permissions and record-level access in the backend on every read/write; hiding a page or filtering arrays in the client is insufficient.
-3. **Data persistence:** Replace `usePersistentState`/`localStorage` and the seed data in `src/data/demoData.js` with API-backed loading and mutations, including loading/error states and server validation.
+3. **Data persistence:** Replace `usePersistentState`/`localStorage` and the seed data in `src/data/demoData.js` with API-backed loading and mutations for properties, rentals, rent payments, sales and sale payments, including loading/error states and server validation.
 4. **Identity and account management:** Decide how admin-created agent/owner profiles receive accounts, invitations, password setup, verification, and account deactivation. In the demo, profile creation does not provision a login.
 5. **External integrations:** Implement and monitor actual Email, SMS, and WhatsApp delivery. The current “notifications,” alerts, and reminders are simulated and do not send messages.
 6. **Audit and data rules:** Define validation, audit history, currency/payment rules, deletion behavior, and who may change enquiry status or register a sale.

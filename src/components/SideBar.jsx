@@ -5,6 +5,7 @@ import {
   Users,
   UserRound,
   HandCoins,
+  KeyRound,
   CreditCard,
   BellRing,
   X,
@@ -17,13 +18,14 @@ function Sidebar({ activePage, setActivePage, isOpen, onClose, role }) {
     { name: "Enquiries", icon: MessageSquare },
     { name: "Agents", icon: Users },
     { name: "Owners", icon: UserRound },
+    { name: "Rentals", icon: KeyRound },
     { name: "Sales", icon: HandCoins },
     { name: "Payments", icon: CreditCard },
     { name: "Notifications", icon: BellRing },
   ];
   const rolePages = {
     admin: allMenuItems.map((item) => item.name),
-    agent: ["Dashboard", "Properties", "Enquiries", "Sales"],
+    agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales"],
     owner: ["Dashboard", "Properties", "Enquiries"],
   };
   const menuItems = allMenuItems.filter((item) => rolePages[role]?.includes(item.name));

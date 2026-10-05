@@ -9,6 +9,7 @@ import Notifications from "./pages/Notifications";
 import Payments from "./pages/Payments";
 import People from "./pages/People";
 import Properties from "./pages/Properties";
+import Rentals from "./pages/Rentals";
 import Sales from "./pages/Sales";
 import {
   initialAgents,
@@ -17,6 +18,8 @@ import {
   initialOwners,
   initialPayments,
   initialProperties,
+  initialRentals,
+  initialRentPayments,
   initialSales,
 } from "./data/demoData";
 import { demoUsers } from "./data/demoUsers";
@@ -24,8 +27,8 @@ import usePersistentState from "./hooks/usePersistentState";
 import { getMatches } from "./lib/demo";
 
 const rolePages = {
-  admin: ["Dashboard", "Properties", "Enquiries", "Agents", "Owners", "Sales", "Payments", "Notifications"],
-  agent: ["Dashboard", "Properties", "Enquiries", "Sales"],
+  admin: ["Dashboard", "Properties", "Enquiries", "Agents", "Owners", "Rentals", "Sales", "Payments", "Notifications"],
+  agent: ["Dashboard", "Properties", "Enquiries", "Rentals", "Sales"],
   owner: ["Dashboard", "Properties", "Enquiries"],
 };
 
@@ -55,6 +58,8 @@ function App() {
   const [owners, setOwners] = usePersistentState("golderp-demo-owners-v1", initialOwners);
   const [sales, setSales] = usePersistentState("golderp-demo-sales-v1", initialSales);
   const [payments, setPayments] = usePersistentState("golderp-demo-payments-v1", initialPayments);
+  const [rentals, setRentals] = usePersistentState("golderp-demo-rentals-v1", initialRentals);
+  const [rentPayments, setRentPayments] = usePersistentState("golderp-demo-rent-payments-v1", initialRentPayments);
   const [notifications, setNotifications] = usePersistentState("golderp-demo-notifications-v1", initialNotifications);
   const [highlightedSaleId, setHighlightedSaleId] = useState(null);
   const [currentUser, setCurrentUser] = usePersistentState("golderp-demo-session-v1", null);
@@ -78,12 +83,28 @@ function App() {
   const scopedSales = !user || isAdmin ? sales : sales.filter((sale) => scopedPropertyIds.has(sale.propertyId));
   const scopedSaleIds = new Set(scopedSales.map((sale) => sale.id));
   const scopedPayments = !user || isAdmin ? payments : payments.filter((payment) => scopedSaleIds.has(payment.saleId));
+  const scopedRentals = !user || isAdmin ? rentals : rentals.filter((rental) => scopedPropertyIds.has(rental.propertyId));
+  const scopedRentalIds = new Set(scopedRentals.map((rental) => rental.id));
+  const scopedRentPayments = !user || isAdmin ? rentPayments : rentPayments.filter((payment) => scopedRentalIds.has(payment.rentalId));
   const scopedAgents = !user || isAdmin ? agents : user.role === "agent" ? agents.filter((agent) => agent.id === user.id) : [];
   const scopedOwners = !user || isAdmin ? owners : user.role === "owner" ? owners.filter((owner) => owner.id === user.id) : [];
   const scopedNotifications = isAdmin ? notifications : [];
   const allowedPages = user ? rolePages[user.role] : [];
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
+
+  useEffect(() => {
+    const rentedPropertyIds = new Set(rentals.filter((rental) => rental.status === "Active").map((rental) => rental.propertyId));
+    setProperties((previous) => {
+      let changed = false;
+      const next = previous.map((property) => {
+        if (!rentedPropertyIds.has(property.id) || property.status === "Rented") return property;
+        changed = true;
+        return { ...property, status: "Rented" };
+      });
+      return changed ? next : previous;
+    });
+  }, [rentals, setProperties]);
 
   function notifyUser(message) {
     window.clearTimeout(toastTimer.current);
@@ -230,7 +251,7 @@ function App() {
 
   function handleAddSale(form) {
     const property = properties.find((item) => item.id === form.propertyId);
-    if (!property) {
+    if (!property || property.listingType !== "For Sale" || property.status !== "Available") {
       notifyUser("Sale could not be saved because the selected property is unavailable.");
       return;
     }
@@ -318,6 +339,66 @@ function App() {
     notifyUser(`Payment saved. Receipt ${payment.reference} issued.`);
   }
 
+  function handleAddRental(form) {
+    const property = properties.find((item) => item.id === form.propertyId);
+    if (!property || property.listingType !== "For Rent" || property.status !== "Available" || rentals.some((rental) => rental.propertyId === form.propertyId && rental.status === "Active")) {
+      notifyUser("Rental could not be saved because the selected property is unavailable.");
+      return;
+    }
+    const rental = {
+      id: Date.now(),
+      propertyId: property.id,
+      propertyTitle: property.title,
+      tenantName: form.tenantName.trim(),
+      tenantEmail: form.tenantEmail.trim(),
+      currency: property.currency || "KSH",
+      monthlyRent: Number(form.monthlyRent),
+      dueDay: Number(form.dueDay),
+      status: "Active",
+      createdAt: new Date().toISOString(),
+    };
+    setRentals((previous) => [rental, ...previous]);
+    setProperties((previous) => previous.map((item) => item.id === property.id ? { ...item, status: "Rented" } : item));
+    addActivity(createNotification(
+      "Rental agreement registered",
+      `${rental.propertyTitle} was rented to ${rental.tenantName} at ${formatCurrencyForActivity(rental.monthlyRent, rental.currency)} per month.`,
+      `${rental.tenantName} · admin team`,
+      "Rental",
+    ));
+    notifyUser(`Rental saved for ${rental.tenantName}. Monthly rent tracking is ready.`);
+  }
+
+  function handleRecordRentPayment(form) {
+    const rental = rentals.find((item) => item.id === form.rentalId && item.status === "Active");
+    const amount = Number(form.amount);
+    if (!rental || !Number.isFinite(amount) || amount <= 0 || !/^\d{4}-\d{2}$/.test(form.period)) {
+      notifyUser("Rent payment could not be recorded. Check the rental account, month and amount.");
+      return;
+    }
+    const paymentId = Date.now();
+    const payment = {
+      id: paymentId,
+      rentalId: rental.id,
+      propertyTitle: rental.propertyTitle,
+      tenantName: rental.tenantName,
+      currency: rental.currency || "KSH",
+      amount,
+      period: form.period,
+      method: form.method,
+      reference: `RNT-${new Date().getFullYear()}-${String(paymentId).slice(-6)}`,
+      date: form.date,
+      note: form.note.trim(),
+    };
+    setRentPayments((previous) => [payment, ...previous]);
+    addActivity(createNotification(
+      "Rent payment receipted",
+      `${formatCurrencyForActivity(payment.amount, rental.currency)} rent received from ${rental.tenantName} for ${payment.period}. Receipt ${payment.reference} issued.`,
+      `${rental.tenantName} · admin team`,
+      "Payment",
+    ));
+    notifyUser(`Rent payment saved. Receipt ${payment.reference} issued.`);
+  }
+
   function handleSendReminder(sale) {
     addActivity(createNotification(
       "Installment reminder prepared",
@@ -363,6 +444,7 @@ function App() {
     if (activePage === "Enquiries") return <Enquiries enquiries={scopedEnquiries} properties={scopedProperties} onAddEnquiry={handleAddEnquiry} onUpdateStatus={handleUpdateEnquiryStatus} onNotifyMatch={handleNotifyMatch} readOnly={user.role === "owner"} />;
     if (activePage === "Agents" && isAdmin) return <People kind="Agents" people={agents} onAddPerson={handleAddPerson} onListProperty={handleListForPerson} onUpdateVerification={(id, verified) => handleUpdateVerification("Agents", id, verified)} />;
     if (activePage === "Owners" && isAdmin) return <People kind="Owners" people={owners} onAddPerson={handleAddPerson} onListProperty={handleListForPerson} onUpdateVerification={(id, verified) => handleUpdateVerification("Owners", id, verified)} />;
+    if (activePage === "Rentals" && user.role !== "owner") return <Rentals rentals={scopedRentals} properties={scopedProperties} rentPayments={scopedRentPayments} onAddRental={handleAddRental} onRecordRentPayment={handleRecordRentPayment} canRecordPayment={isAdmin} />;
     if (activePage === "Sales" && user.role !== "owner") return <Sales sales={scopedSales} properties={scopedProperties} enquiries={scopedEnquiries} payments={scopedPayments} onAddSale={handleAddSale} onSendReminder={handleSendReminder} onGoPayments={(saleId) => { setHighlightedSaleId(saleId); navigate("Payments"); }} canRecordPayment={isAdmin} />;
     if (activePage === "Payments" && isAdmin) return <Payments payments={payments} sales={sales} highlightedSaleId={highlightedSaleId} onRecordPayment={handleRecordPayment} />;
     if (activePage === "Notifications" && isAdmin) return <Notifications notifications={notifications} />;

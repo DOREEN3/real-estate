@@ -5,7 +5,9 @@ import PageHeading from "../components/PageHeading";
 import { formatCurrencyTotals, formatDate, formatMoney, inputClass } from "../lib/demo";
 
 function SaleEditor({ properties, enquiries, onClose, onSave }) {
-  const availableProperties = properties.filter((property) => property.status === "Available");
+  const availableProperties = properties.filter((property) =>
+    property.listingType === "For Sale" && property.status === "Available"
+  );
   const [form, setForm] = useState({ propertyId: availableProperties[0]?.id || "", buyerName: "", buyerEmail: "", salePrice: "", deposit: "", installmentAmount: "", installmentsTotal: "12", nextDueDate: "" });
   const [selectedEnquiry, setSelectedEnquiry] = useState("");
   const selectedProperty = availableProperties.find((property) => String(property.id) === String(form.propertyId));
