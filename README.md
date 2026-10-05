@@ -14,10 +14,11 @@ npm run dev
 | Role | Email | Password |
 | --- | --- | --- |
 | Admin | `admin@golderp.demo` | `admin123` |
-| Agent | `lydia@golderp.example` | `agent123` |
+| Agent (Lydia Njeri) | `lydia@golderp.example` | `agent123` |
+| Agent (Brian Otieno) | `brian@golderp.example` | `brian123` |
 | Owner | `miriam@example.com` | `owner123` |
 
-Select an account on the sign-in page to fill in its demo credentials. Sign out to switch roles. The demo account list is fixed: adding an agent or owner from the Admin screens creates a contact record, not a login account.
+Select an account on the sign-in page to fill in its demo credentials. Sign out to switch accounts. Brian Otieno's demo agent account is assigned to the seeded Cozy 2 Bedroom Flat rental. The demo account list is fixed: adding an agent or owner from the Admin screens creates a contact record, not a login account.
 
 ## Roles and permissions shown in the demo
 

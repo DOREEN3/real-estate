@@ -14,6 +14,13 @@ export const demoUsers = [
     id: 102,
   },
   {
+    email: "brian@golderp.example",
+    password: "brian123",
+    name: "Brian Otieno",
+    role: "agent",
+    id: 103,
+  },
+  {
     email: "miriam@example.com",
     password: "owner123",
     name: "Miriam Wambui",

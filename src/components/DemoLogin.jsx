@@ -57,8 +57,8 @@ function DemoLogin({ onLogin }) {
             <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><KeyRound size={14} /> Demo accounts</h3>
             <div className="mt-3 space-y-2">
               {demoUsers.map((user) => (
-                <button key={user.role} type="button" onClick={() => { setEmail(user.email); setPassword(user.password); setError(""); }} className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-[#D4A72C] hover:bg-amber-50/40">
-                  <span><span className="block text-sm font-semibold capitalize text-[#0F2A43]">{user.role}</span><span className="mt-0.5 block text-xs text-slate-500">{user.email} · {user.password}</span></span>
+                <button key={user.email} type="button" onClick={() => { setEmail(user.email); setPassword(user.password); setError(""); }} className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-[#D4A72C] hover:bg-amber-50/40">
+                  <span><span className="block text-sm font-semibold text-[#0F2A43]">{user.name} · {user.role}</span><span className="mt-0.5 block text-xs text-slate-500">{user.email} · {user.password}</span></span>
                   <span className="text-xs font-semibold text-[#876509]">Use</span>
                 </button>
               ))}
