@@ -3,22 +3,34 @@ require_once __DIR__ . '/env.php';
 date_default_timezone_set('Africa/Nairobi');
 
 $appEnvironment = strtolower(getenv('APP_ENV') ?: 'development');
-$host = getenv('DB_HOST') ?: 'localhost';
+$host = getenv('DB_HOST') ?: '';
 $port = getenv('DB_PORT') ?: '3306';
-$dbname = getenv('DB_NAME') ?: 'real_estate';
-$username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASSWORD') ?: '';
+$dbname = getenv('DB_NAME') ?: '';
+$username = getenv('DB_USER') ?: '';
+$password = getenv('DB_PASSWORD') !== false
+    ? getenv('DB_PASSWORD')
+    : (getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 
-if (
-    $appEnvironment === 'production'
-    && (getenv('DB_HOST') === false || getenv('DB_NAME') === false
-        || getenv('DB_USER') === false || getenv('DB_PASSWORD') === false
-        || $host === '' || $dbname === '' || $username === '' || $password === '')
-) {
-    http_response_code(500);
-    header("Content-Type: application/json");
-    echo json_encode(["success" => false, "message" => "Database configuration is incomplete"]);
-    exit;
+if ($appEnvironment === 'production') {
+    $missing = [];
+    if (empty($host)) $missing[] = 'DB_HOST';
+    if (empty($dbname)) $missing[] = 'DB_NAME';
+    if (empty($username)) $missing[] = 'DB_USER';
+    if ($password === '') $missing[] = 'DB_PASSWORD (or DB_PASS)';
+
+    if (!empty($missing)) {
+        http_response_code(500);
+        header("Content-Type: application/json");
+        echo json_encode([
+            "success" => false,
+            "message" => "Database configuration is incomplete: missing " . implode(', ', $missing) . " in environment variables."
+        ]);
+        exit;
+    }
+} else {
+    if (empty($host)) $host = 'localhost';
+    if (empty($dbname)) $dbname = 'real_estate';
+    if (empty($username)) $username = 'root';
 }
 
 $pdoOptions = [

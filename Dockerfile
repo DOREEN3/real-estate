@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install pdo pdo_mysql
 
 # Enable Apache mod_rewrite for REST routing
-RUN a2enmod rewrite headers
+RUN a2enmod rewrite headers \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Point Apache DocumentRoot to the public/ folder
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
