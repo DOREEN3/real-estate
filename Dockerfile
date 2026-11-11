@@ -1,7 +1,10 @@
 FROM php:8.2-apache
 
-# Install PHP extensions required for database access
-RUN docker-php-ext-install pdo pdo_mysql
+# Install system dependencies and PHP extensions required for database and SSL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-install pdo pdo_mysql
 
 # Enable Apache mod_rewrite for REST routing
 RUN a2enmod rewrite headers
