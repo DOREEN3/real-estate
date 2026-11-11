@@ -1,0 +1,83 @@
+# GoldERP Real Estate Demo
+
+A browser-based real-estate management demo built with React and Vite. It demonstrates role-specific workflows for managing property listings, buyer enquiries, sales, and payments. The app currently uses local demo data; backend services and production authentication have not been implemented.
+
+## Run locally
+
+```sh
+npm install
+npm run dev
+```
+
+## Demo accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@golderp.demo` | `admin123` |
+| Agent (Brian Otieno) | `brian@golderp.example` | `brian123` |
+| Owner | `miriam@example.com` | `owner123` |
+
+Select an account on the sign-in page to fill in its demo credentials. Sign out to switch accounts. New agents can self-register from the sign-in page: the form collects name, email, phone, agency, city/country, and password, always creates a `pending` agent + login account, logs simulated receipt/admin emails to the console and Notifications, and blocks sign-in until an admin approves via Agents → Verify identity (approval flips the login to `approved`; revoking flips it to `rejected` and blocks sign-in). Brian Otieno's demo agent account is assigned to the seeded Cozy 2 Bedroom Flat rental. The Owner account has its own seeded Kilimani rental and can view its tenant, rent status, and receipts. Lydia Njeri remains a sample agent contact but is not a sign-in account. Adding an agent or owner from the Admin screens creates a contact record, not a login account.
+
+## Roles and permissions shown in the demo
+
+| Role | Pages | Main actions and data scope |
+| --- | --- | --- |
+| Admin | Dashboard, Properties, Enquiries, Agents, Owners, Rentals, Sales, Payments, Notifications | Sees all demo records; can add and edit listings, add enquiries, manage agent/owner records and verification, register rentals and sales, record rent and sale payments, and review simulated activity. |
+| Agent | Dashboard, Properties, Enquiries, Rentals, Sales, Notifications | Sees listings assigned to that agent, related/matching leads, and rental and sale accounts for those listings. Can add and edit assigned listings, add enquiries, update related enquiry status, send simulated match alerts/reminders, and register rentals and sales for assigned properties. Rental records show the current rent status/monthly summary but not receipts; sale agreements show contract/installment details but not payment history, sale payment balances, or statements. Sees only alerts addressed to their agent account; payment recording is admin-only. |
+| Owner | Dashboard, Properties, Enquiries, Rentals, Notifications | Sees only properties assigned to that owner, related enquiries, tenants, rent status, rent collected/outstanding summaries, receipts, and notifications addressed to their owner account. Can add and edit their own property listings. Rentals and enquiry views are read-only; sales, payment entry, other owners' records, and admin tools are not available. |
+
+Role checks and data filtering currently happen in the React app. They are demo behavior, not security controls; a backend must independently authenticate the user, authorize every operation, and enforce record ownership. Demo notifications are scoped by recipient role and profile ID; external delivery is not implemented.
+
+## Main workflows
+
+### Properties
+
+Users can browse and filter listings by keyword/location, listing type, property type, status, currency, and price range. Admin can attribute a new listing to a verified agent or owner. Agent- and owner-created listings are automatically attributed to the signed-in demo account. Listing details can be used to record a buyer enquiry.
+
+### Enquiries
+
+An enquiry stores buyer contact details and requirements, a status, and a source. Source is distinct from the buyer's preferred contact method:
+
+- **Source:** Website, WhatsApp, SMS, or Email — where the enquiry came from.
+- **Preferred contact method:** WhatsApp, Phone, or Email — how the buyer prefers to be contacted.
+
+The pipeline filters by both status and source. Enquiries can be matched against listings; status updates and match alerts are simulated. Enquiries created by an agent are associated with that agent. Enquiries tied to a property retain its property reference; website/general enquiries may have no property reference.
+
+### Sales and payments
+
+Sales reference a property and record buyer, agreed price, deposit, and installment schedule. Registering a sale creates a demo deposit receipt and marks the property as sold. Admin can record further payments and view payment history/statements; agents can view related sale agreements and installment schedules, but not payment history, sale payment balances, or statements. Reminders and receipts are local demo activity only.
+
+### Rentals and rent payments
+
+Register a rental against an available **For Rent** property with the tenant, monthly rent, and due day. This marks the property as rented and creates a tenant account. The Rentals page totals payments against each rent month and shows **Paid** once recorded payments meet that month's rent; partial, due, and overdue amounts remain visible. Admins can record full or partial rent payments, choose the month and method, and issue/print receipts. Owners can view receipts for their own rental properties; agents can view related rental status but not receipts. Rent and sale accounts and receipts are tracked separately. All rental and payment data is local demo activity and does not verify money with a bank or mobile-money provider.
+
+## Data relationships for backend planning
+
+These relationships describe the current demo and a reasonable starting point for the API/database design; they are not a finalized schema:
+
+- **User** has a role (`admin`, `agent`, or `owner`). An agent/owner login should be linked to its corresponding agent/owner profile. The demo login options are fixed examples; creating a contact record does not provision a login.
+- **Property** may reference an assigned agent and owner. The demo uses `agentId` and `ownerId`; either can be empty for an unassigned contact.
+- **Enquiry** has a source, preferred contact method, status, buyer requirements, and may reference a property and/or assigned agent. Matching may associate one enquiry with multiple suitable properties; a match should not be confused with an explicit property interest.
+- **Sale** references a property and contains the buyer and agreement/payment-plan details.
+- **Payment** references a sale; sale payment totals determine the remaining balance.
+- **Rental** references a property and contains the tenant, monthly rent, due day, and tenancy status.
+- **Rent payment** references a rental and a rent month; payments for that month determine whether it is due, partially paid, overdue, or paid.
+- **Notification/activity** currently records a message, category, timestamp, and audience as display text. Real notification delivery, recipients, and delivery status are not implemented.
+
+When building the backend, use stable server-generated IDs and explicit foreign keys/relations rather than relying on display names or the demo's browser-generated IDs. Confirm business rules for agent assignment, enquiry ownership, sale creation, verification, and owner visibility before enforcing them in the API.
+
+## Demo-to-backend handoff
+
+Replace or revisit the following before production:
+
+1. **Authentication:** Replace the hard-coded credentials in `src/data/demoUsers.js` and browser session state with server-backed sign-in, secure password handling, session/token lifecycle, and logout.
+2. **Authorization:** Enforce role permissions and record-level access in the backend on every read/write; hiding a page or filtering arrays in the client is insufficient.
+3. **Data persistence:** Replace `usePersistentState`/`localStorage` and the seed data in `src/data/demoData.js` with API-backed loading and mutations for properties, rentals, rent payments, sales and sale payments, including loading/error states and server validation.
+4. **Identity and account management:** Decide how admin-created agent/owner profiles receive accounts, invitations, password setup, verification, and account deactivation. In the demo, profile creation does not provision a login.
+5. **External integrations:** Implement and monitor actual Email, SMS, and WhatsApp delivery. The current “notifications,” alerts, and reminders are simulated and do not send messages. Agent registration emails are also simulated via console + Notifications entries; production needs a mail provider for: new-registration → admin, receipt → agent, approved → agent with login link, rejected → agent with reason.
+6. **Audit and data rules:** Define validation, audit history, currency/payment rules, deletion behavior, and who may change enquiry status or register a sale.
+
+## Demo limitations
+
+Credentials are visible in the client bundle, browser storage is not shared between users or devices, and local data can be changed by the browser user. Do not use real personal, payment, or credential data with this prototype. Build and lint checks can be run with `npm run build` and `npm run lint`.

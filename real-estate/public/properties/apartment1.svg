@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Luxury apartment building</title>
+  <desc id="desc">A high-rise apartment tower with city skyline.</desc>
+  <defs>
+    <linearGradient id="sky2" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dfeaf9"/>
+      <stop offset="100%" stop-color="#f8fbff"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#becbd8"/>
+      <stop offset="100%" stop-color="#8ea3b7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky2)"/>
+  <rect y="560" width="1200" height="240" fill="#d3dfe9"/>
+  <rect x="170" y="220" width="860" height="380" fill="#f0f4f9" rx="18"/>
+  <rect x="260" y="270" width="200" height="330" fill="url(#tower)" rx="12"/>
+  <rect x="500" y="210" width="220" height="390" fill="url(#tower)" rx="12"/>
+  <rect x="760" y="290" width="180" height="310" fill="url(#tower)" rx="12"/>
+  <rect x="285" y="310" width="150" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="285" y="370" width="150" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="285" y="430" width="150" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="285" y="490" width="150" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="525" y="250" width="170" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="525" y="320" width="170" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="525" y="390" width="170" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="525" y="460" width="170" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="785" y="335" width="130" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="785" y="405" width="130" height="30" fill="#f7fbff" rx="4"/>
+  <rect x="785" y="475" width="130" height="30" fill="#f7fbff" rx="4"/>
+  <path d="M160 575 L1040 575 L1040 620 Q950 670 870 620 L330 620 Q220 670 160 620 Z" fill="#d0d9e1"/>
+  <rect x="80" y="620" width="1040" height="28" fill="#abd0e3" opacity="0.55"/>
+  <circle cx="915" cy="120" r="60" fill="#ffe08f" opacity="0.9"/>
+</svg>

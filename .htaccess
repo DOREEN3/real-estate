@@ -1,0 +1,21 @@
+# Apache Root Protection & Rewrite Configuration
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Deny direct access to sensitive folders and files
+    RewriteRule ^(\.git|\.env|config|app|database|storage|tests|extras|archive) - [F,L,NC]
+
+    # Rewrite all API or root traffic to the public directory
+    RewriteCond %{REQUEST_URI} !^/real-estate-backend/public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Block access to hidden files (.env, .git, etc.)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent directory indexing
+Options -Indexes

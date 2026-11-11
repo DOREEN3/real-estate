@@ -1,0 +1,52 @@
+# ==============================================================================
+# Git Ignore Configuration - Production & Security Hardened
+# ==============================================================================
+
+# Environment files & secrets (NEVER commit live keys, secrets, or passwords)
+.env
+.env.*
+!.env.example
+
+# Certificates & private keys
+*.pem
+*.key
+*.cert
+*.pfx
+
+# Dependency directories
+/vendor/
+/node_modules/
+/real-estate/node_modules/
+/real-estate/dist/
+
+# Private storage & client verification documents
+/storage/private/*
+!/storage/private/.gitkeep
+!/storage/private/.htaccess
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# User uploaded media & property images (handled dynamically in hosting)
+/public/uploads/properties/*
+!/public/uploads/properties/.gitkeep
+
+# Database backups & raw SQL dumps (allow migration schemas only)
+database/*(2)*.sql
+database/*dump*.sql
+database/*backup*.sql
+*.sql.bak
+*.dump
+*.bak
+
+# Temporary process locks & diagnostic test scripts
+*.lock
+/scripts/test_smtp_connection.php
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.log

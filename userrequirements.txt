@@ -1,0 +1,11 @@
+Real estate app Requirements.
+1) capacity to collect property detsils
+Google pin, location, price, short description, photos etc.
+2) Capable of saving an Enquiry.
+3) Capacity to look at existing and future new properties and match with registered Enquiries. 
+4) To be able to run Automated actions. When number one is saved, all agents registered by the app to get notification of the new property. When number 3 has similar properties, The seller, agent that intoduced the property, ourself and the lead gets an email, sms and whatsapp notification of serious availability.
+5) The software to manage sales. Register a sale, capture payments( Receipting). Give statements and reminder messages for instalments.
+6) Software to show available properties will filtrations, location, price range, type. Etc.
+7) Software to be accessed on desktop and on phone.
+8) Varified agents and lroperty owners to list the properties directly but enquiry contacts to be done to us.
+9) Software to accomodate properties for sale,BnB and rental properties worlwide.

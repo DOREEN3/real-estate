@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Modern studio apartment</title>
+  <desc id="desc">A compact high-rise apartment in the city.</desc>
+  <defs>
+    <linearGradient id="sky4" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dfeaf9"/>
+      <stop offset="100%" stop-color="#eef5ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky4)"/>
+  <rect y="560" width="1200" height="240" fill="#d7e3eb"/>
+  <rect x="240" y="230" width="720" height="330" fill="#eef3f8" rx="18"/>
+  <rect x="290" y="260" width="160" height="240" fill="#c3d1df" rx="10"/>
+  <rect x="480" y="260" width="180" height="240" fill="#d8e1eb" rx="10"/>
+  <rect x="690" y="260" width="190" height="240" fill="#c3d1df" rx="10"/>
+  <rect x="320" y="300" width="100" height="170" fill="#f8fbff" rx="6"/>
+  <rect x="520" y="300" width="120" height="170" fill="#f8fbff" rx="6"/>
+  <rect x="725" y="300" width="120" height="170" fill="#f8fbff" rx="6"/>
+  <path d="M200 595 H1000 L1000 650 Q930 690 850 650 H350 Q260 690 200 650 Z" fill="#b4c5d6"/>
+  <rect x="120" y="620" width="960" height="24" fill="#a9bfd1" opacity="0.7"/>
+  <circle cx="960" cy="110" r="58" fill="#ffe28b" opacity="0.9"/>
+</svg>
