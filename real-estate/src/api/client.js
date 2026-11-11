@@ -2,7 +2,10 @@
  * Modern REST API Client with Automatic JWT Refresh and Error Handling
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+const rawBase = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
+const BASE_URL = rawBase
+  ? (rawBase.endsWith("/api/v1") ? rawBase : `${rawBase}/api/v1`)
+  : "/api/v1";
 
 let isRefreshing = false;
 let failedQueue = [];
