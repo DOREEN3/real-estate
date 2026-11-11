@@ -1,0 +1,8 @@
+.git
+.github
+.env
+real-estate/node_modules
+real-estate/dist
+node_modules
+vendor
+tests
