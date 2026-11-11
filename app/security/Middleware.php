@@ -160,15 +160,40 @@ private static array $routeRoleRequirements = [
     public static function cors(): void
     {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $originTrimmed = rtrim($origin, '/');
 
-        if (in_array($origin, self::$allowedOrigins, true) || in_array('*', self::$allowedOrigins, true)) {
-            $allowOrigin = in_array('*', self::$allowedOrigins, true) ? '*' : $origin;
+        $isAllowed = false;
+        $allowOrigin = '';
+
+        if (in_array('*', self::$allowedOrigins, true)) {
+            $isAllowed = true;
+            $allowOrigin = '*';
+        } else {
+            foreach (self::$allowedOrigins as $allowed) {
+                $allowedTrimmed = rtrim(trim($allowed), '/');
+                if ($allowedTrimmed === $originTrimmed || $allowedTrimmed === $origin) {
+                    $isAllowed = true;
+                    $allowOrigin = $origin;
+                    break;
+                }
+                // Allow wildcard subdomains like *.vercel.app
+                if (str_starts_with($allowedTrimmed, '*.') && str_ends_with($originTrimmed, substr($allowedTrimmed, 1))) {
+                    $isAllowed = true;
+                    $allowOrigin = $origin;
+                    break;
+                }
+            }
+        }
+
+        if ($isAllowed) {
             header("Access-Control-Allow-Origin: $allowOrigin");
+            if ($allowOrigin !== '*') {
+                header("Access-Control-Allow-Credentials: true");
+            }
         }
 
         header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
         header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
-        header("Access-Control-Allow-Credentials: true");
         header("Access-Control-Max-Age: 86400");
 
         // Handle preflight OPTIONS request

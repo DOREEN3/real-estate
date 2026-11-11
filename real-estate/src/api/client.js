@@ -114,10 +114,14 @@ export async function apiRequest(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      const fallbackMessage = (data.errors && typeof data.errors === "object")
+        ? Object.values(data.errors).flat().join(" ")
+        : `Request failed with status ${response.status}`;
+
       return {
         success: false,
         status: response.status,
-        message: data.message || "An error occurred with your request",
+        message: data.message || fallbackMessage,
         errors: data.errors || null,
         data: data.data || null,
       };

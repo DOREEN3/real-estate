@@ -28,42 +28,48 @@ if ($appEnvironment === 'production' || !$appDebug) {
 }
 
 
-// Secrets and production origins must be provided by the deployment environment.
 $appEnvironment = strtolower(getenv('APP_ENV') ?: 'development');
+
+// Configure allowed CORS origins
+if ($appEnvironment === 'production') {
+    $rawOrigins = explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '');
+    $origins = [];
+    foreach ($rawOrigins as $raw) {
+        $origin = rtrim(trim($raw), '/');
+        if ($origin === '') {
+            continue;
+        }
+        if ($origin === '*') {
+            $origins[] = '*';
+            continue;
+        }
+        $parsedOrigin = parse_url($origin);
+        if (
+            isset($parsedOrigin['scheme'], $parsedOrigin['host'])
+            && in_array(strtolower($parsedOrigin['scheme']), ['https', 'http'], true)
+        ) {
+            $origins[] = $origin;
+        }
+    }
+    if ($origins) {
+        Middleware::setAllowedOrigins($origins);
+    }
+}
+
+// Apply CORS headers immediately so preflight OPTIONS and error responses carry CORS headers
+Middleware::cors();
+Middleware::securityHeaders();
+
+// Secrets and production origins validation
 $jwtSecret = getenv('JWT_SECRET');
 if (
     !in_array($appEnvironment, ['development', 'production'], true)
     || !is_string($jwtSecret)
     || strlen($jwtSecret) < 32
 ) {
-    sendError("Server security configuration is missing or invalid", 500);
+    sendError("Server security configuration is missing or invalid: JWT_SECRET must be at least 32 characters", 500);
 }
 JWT::init($jwtSecret);
-
-if ($appEnvironment === 'production') {
-    $origins = array_values(array_filter(array_map(
-        'trim',
-        explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '')
-    )));
-    foreach ($origins as $origin) {
-        $parsedOrigin = parse_url($origin);
-        if (
-            !isset($parsedOrigin['scheme'], $parsedOrigin['host'])
-            || strtolower($parsedOrigin['scheme']) !== 'https'
-            || isset($parsedOrigin['user'])
-            || isset($parsedOrigin['pass'])
-            || isset($parsedOrigin['query'])
-            || isset($parsedOrigin['fragment'])
-            || isset($parsedOrigin['path']) && $parsedOrigin['path'] !== ''
-        ) {
-            sendError("Production CORS origins must be exact HTTPS origins", 500);
-        }
-    }
-    if (!$origins) {
-        sendError("Production CORS origins are not configured", 500);
-    }
-    Middleware::setAllowedOrigins($origins);
-}
 
 require_once __DIR__ . "/../routes/PropertyRoutes.php";
 require_once __DIR__ . "/../routes/EnquiryRoutes.php";
@@ -77,11 +83,8 @@ require_once __DIR__ . "/../routes/userRoutes.php";
 require_once __DIR__ . "/../routes/FinanceRoutes.php";
 require_once __DIR__ . "/../routes/AuditLogRoutes.php";
 
-// Apply CORS headers
-Middleware::cors();
-
 // Apply security headers
-Middleware::securityHeaders();
+
 
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 $requestUri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) ?: "/";
